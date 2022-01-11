@@ -237,16 +237,21 @@ sys_open(void *arg)
     kassert(fetch_arg(arg, 2, &flags));
     kassert(fetch_arg(arg, 3, &mode));
 
-    // [Aaron] ERR_NOTEXIST
     if (!validate_str((char*)pathname)) {
         return ERR_FAULT;
     }
+
+    struct file **file = NULL;
+
+    // if fs_open_file(pathname, flags, mode) returns ERR_OK, then return file.
+    err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, file);
     
+    if (open_file_return == ERR_OK) {
+        // Get file fd, how? [Aaron]
+        return 0;
+    }
 
-    return ERR_OK; // for now
-    // [Aaron] Check flag and mode.
-
-
+    return open_file_return;
 }
 
 // int close(int fd);
