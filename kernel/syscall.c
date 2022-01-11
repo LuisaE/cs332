@@ -224,7 +224,18 @@ sys_open(void *arg)
 static sysret_t
 sys_close(void *arg)
 {
-    panic("syscall close not implemented");
+    sysarg_t fd;
+
+    kassert(fetch_arg(arg, 1, &fd));
+
+    if (!validate_fd(fd)) {
+        return ERR_INVAL;
+    }
+
+    struct proc *p = proc_current();
+    p->open_files[fd]->f_ref -=1;
+    return ERR_OK
+    // CHECK W AARON
 }
 
 // int read(int fd, void *buf, size_t count);
@@ -354,7 +365,9 @@ sys_readdir(void *arg)
         return ERR_INVAL;
     }
 
-    if (proc_current()->open_files[fd] != NULL) {
+    struct proc *p = proc_current();
+
+    if (p->open_files[fd] != NULL) {
         return ERR_FTYPE;
     }
 
@@ -362,10 +375,10 @@ sys_readdir(void *arg)
         return ERR_END;
     }
 
-    dirent = proc_current()->open_files[fd+1];
+    dirent = p->open_files[fd+1];
     fd += fd;
 
-    fs_readdir(proc_current()->open_files[fd], dirent); // AARON
+    fs_readdir(p->open_files[fd], dirent); // AARON
     return ERR_OK;
 }
 

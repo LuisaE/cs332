@@ -55,8 +55,4 @@ int proc_wait(pid_t, int* status);
 /* Exit a process with a status */
 void proc_exit(int);
 
-static int alloc_fd(struct file *f);
-
-static bool validate_fd(int fd);
-
 #endif /* _PROC_H_ */

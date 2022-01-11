@@ -346,6 +346,7 @@ error:
 }
 
 static int alloc_fd(struct file *f) {
+    struct proc *p = proc_current();
     for (int i = 0; i < PROC_MAX_ARG; i++) {
         if (p->open_files[i] != NULL) {  // AARONNNN
             p->open_files[i] = f;
