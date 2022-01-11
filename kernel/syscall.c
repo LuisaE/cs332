@@ -202,7 +202,22 @@ sys_sleep(void* arg)
 static sysret_t
 sys_open(void *arg)
 {
-    panic("syscall open not implemented");
+    sysarg_t pathname, flags, mode;
+
+    kassert(fetch_arg(arg, 1, &pathname));
+    kassert(fetch_arg(arg, 2, &flags));
+    kassert(fetch_arg(arg, 3, &mode));
+
+    // [Aaron] ERR_NOTEXIST
+    if (!validate_str((char*)pathname)) {
+        return ERR_FAULT;
+    }
+    
+
+
+    // [Aaron] Check flag and mode.
+
+
 }
 
 // int close(int fd);

@@ -19,6 +19,7 @@ struct proc {
     struct inode *cwd;                  // current working directory
     List threads;                       // list of threads belong to the process, right now just 1 per process
     Node proc_node;                     // used by ptable to keep track each process
+    struct file *open_files[PROC_MAX_FILE];      // the file descriptor will be the respective index into the file table
 };
 
 struct proc *init_proc;
@@ -53,5 +54,9 @@ int proc_wait(pid_t, int* status);
 
 /* Exit a process with a status */
 void proc_exit(int);
+
+static int alloc_fd(struct file *f);
+
+static bool validate_fd(int fd);
 
 #endif /* _PROC_H_ */

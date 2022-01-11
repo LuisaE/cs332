@@ -344,3 +344,22 @@ error:
     pmem_free(paddr);
     return err;
 }
+
+static int alloc_fd(struct file *f) {
+    for (int i = 0; i < PROC_MAX_ARG; i++) {
+        if (this.proc.open_files[i] != NULL) {
+            this.proc.open_files[i] = f;
+            return i;
+        }
+    }
+    // [Aaron] User error
+    return -1;
+}
+
+static bool validate_fd(int fd) {
+    // Invalid only if out of bounds 
+    if (fd < 0 || fd >= PROC_MAX_ARG) {
+        return False;
+    }
+    return True;
+}
