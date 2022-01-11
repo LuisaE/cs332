@@ -345,7 +345,28 @@ sys_chdir(void *arg)
 static sysret_t
 sys_readdir(void *arg)
 {
-    panic("syscall readir not implemented");
+    sysarg_t fd;
+    sysarg_t *dirent;
+    kassert(fetch_arg(arg, 1, &fd));
+    kassert(fetch_arg(arg, 2, dirent));
+
+    if (!validate_fd(fd)) {
+        return ERR_INVAL;
+    }
+
+    if (proc_current()->open_files[fd] != NULL) {
+        return ERR_FTYPE;
+    }
+
+    if (fd + 1 == PROC_MAX_ARG) {
+        return ERR_END;
+    }
+
+    dirent = proc_current()->open_files[fd+1];
+    fd += fd;
+
+    fs_readdir(proc_current()->open_files[fd], dirent); // AARON
+    return ERR_OK;
 }
 
 // int rmdir(const char *pathname);

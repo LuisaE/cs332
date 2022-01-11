@@ -347,8 +347,8 @@ error:
 
 static int alloc_fd(struct file *f) {
     for (int i = 0; i < PROC_MAX_ARG; i++) {
-        if (this.proc.open_files[i] != NULL) {
-            this.proc.open_files[i] = f;
+        if (p->open_files[i] != NULL) {  // AARONNNN
+            p->open_files[i] = f;
             return i;
         }
     }
