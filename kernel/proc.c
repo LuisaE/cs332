@@ -104,6 +104,10 @@ proc_init(char* name)
         proc_free(p);
         return NULL;
     }
+
+    p->open_files[0] = &stdin;
+    p->open_files[1] = &stdout;
+
     return p;
 }
 
@@ -343,24 +347,4 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
 error:
     pmem_free(paddr);
     return err;
-}
-
-static int alloc_fd(struct file *f) {
-    struct proc *p = proc_current();
-    for (int i = 0; i < PROC_MAX_ARG; i++) {
-        if (p->open_files[i] != NULL) {  // AARONNNN
-            p->open_files[i] = f;
-            return i;
-        }
-    }
-    // [Aaron] User error
-    return -1;
-}
-
-static bool validate_fd(int fd) {
-    // Invalid only if out of bounds 
-    if (fd < 0 || fd >= PROC_MAX_ARG) {
-        return False;
-    }
-    return True;
 }

@@ -52,6 +52,14 @@ static bool validate_str(char *s);
  * Validate buffer passed by user.
  */
 static bool validate_ptr(void* ptr, size_t size);
+/*
+ * Validate file fd.
+ */
+static bool validate_fd(int fd);
+/*
+ * Look through process’s open file table to find an available fd, and store the pointer.
+ */
+//static int alloc_fd(struct file *f);
 
 
 static sysret_t (*syscalls[])(void*) = {
@@ -108,6 +116,27 @@ validate_ptr(void* ptr, size_t size)
     return as_find_memregion(&proc_current()->as, ptraddr, size) != NULL;
 }
 
+// static int alloc_fd(struct file *f) {
+//     struct proc *p;
+//     p = proc_current();
+
+//     for (int i = 0; i < PROC_MAX_ARG; i++) {
+//         if (p->open_files[i] != NULL) {  // AARONNNN
+//             p->open_files[i] = f;
+//             return i;
+//         }
+//     }
+//     // [Aaron] User error
+//     return -1;
+// }
+
+static bool validate_fd(int fd) {
+    // Invalid only if out of bounds 
+    if (fd < 0 || fd >= PROC_MAX_ARG) {
+        return False;
+    }
+    return True;
+}
 
 // int fork(void);
 static sysret_t
@@ -214,7 +243,7 @@ sys_open(void *arg)
     }
     
 
-
+    return ERR_OK; // for now
     // [Aaron] Check flag and mode.
 
 
@@ -234,7 +263,7 @@ sys_close(void *arg)
 
     struct proc *p = proc_current();
     p->open_files[fd]->f_ref -=1;
-    return ERR_OK
+    return ERR_OK;
     // CHECK W AARON
 }
 
@@ -357,9 +386,9 @@ static sysret_t
 sys_readdir(void *arg)
 {
     sysarg_t fd;
-    sysarg_t *dirent;
+    sysarg_t dirent;
     kassert(fetch_arg(arg, 1, &fd));
-    kassert(fetch_arg(arg, 2, dirent));
+    kassert(fetch_arg(arg, 2, &dirent));
 
     if (!validate_fd(fd)) {
         return ERR_INVAL;
@@ -375,10 +404,10 @@ sys_readdir(void *arg)
         return ERR_END;
     }
 
-    dirent = p->open_files[fd+1];
+    //dirent = (struct dirent*) p->open_files[fd+1];
     fd += fd;
 
-    fs_readdir(p->open_files[fd], dirent); // AARON
+    fs_readdir(p->open_files[fd], (struct dirent*) dirent); // AARON
     return ERR_OK;
 }
 
