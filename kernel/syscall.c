@@ -59,7 +59,7 @@ static bool validate_fd(int fd);
 /*
  * Look through process’s open file table to find an available fd, and store the pointer.
  */
-//static int alloc_fd(struct file *f);
+static int alloc_fd(struct file *f);
 
 
 static sysret_t (*syscalls[])(void*) = {
@@ -116,26 +116,23 @@ validate_ptr(void* ptr, size_t size)
     return as_find_memregion(&proc_current()->as, ptraddr, size) != NULL;
 }
 
-// static int alloc_fd(struct file *f) {
-//     struct proc *p;
-//     p = proc_current();
+static int alloc_fd(struct file *f) {
+    struct proc *p;
+    p = proc_current();
 
-//     for (int i = 0; i < PROC_MAX_ARG; i++) {
-//         if (p->open_files[i] != NULL) {  // AARONNNN
-//             p->open_files[i] = f;
-//             return i;
-//         }
-//     }
-//     // [Aaron] User error 
-//     return -1;
-// }
+    for (int i = 2; i < PROC_MAX_ARG; i++) {
+        if (!(p->open_files[i])) {
+            p->open_files[i] = f;
+            return i;
+        }
+    }
+    
+    return ERR_NOMEM;
+}
 
 static bool validate_fd(int fd) {
-    // Invalid only if out of bounds - Check with Aaron: test takes long
-    if (fd < 0 || fd >= PROC_MAX_ARG) {
-        return False;
-    }
-    return True;
+    // Invalid only if out of bounds
+    return !(fd < 0 || fd >= PROC_MAX_ARG);
 }
 
 // int fork(void);
@@ -247,9 +244,7 @@ sys_open(void *arg)
     err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, file);
 
     if (open_file_return == ERR_OK) {
-        // Get file fd, how? [Aaron]
-        // Basic: Address and for loop? 
-        return 0;
+        return alloc_fd(*file);
     }
 
     return open_file_return;
@@ -274,7 +269,6 @@ sys_close(void *arg)
 }
 
 // int read(int fd, void *buf, size_t count);
-// BYTES LESS, how to deal? Aaron
 static sysret_t
 sys_read(void* arg)
 {
@@ -325,7 +319,6 @@ sys_write(void* arg)
     ssize_t return_write = fs_write_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 
     if (return_write == -1) {
-        // Check with Aaron
         return ERR_END;
     }
     // if (fd == 1) {
@@ -422,6 +415,10 @@ sys_readdir(void *arg)
         return ERR_INVAL;
     }
 
+     if (!validate_ptr((void*)dirent, sizeof(struct dirent))) {
+        return ERR_FAULT;
+    }
+
     struct proc *p = proc_current();
 
     if (p->open_files[fd] != NULL) {
@@ -432,8 +429,9 @@ sys_readdir(void *arg)
         return ERR_END;
     }
 
+
     //dirent = (struct dirent*) p->open_files[fd+1];
-    // Aaron: how to know which dir are valid for readdir?
+    // Aaron: how to know which dir are valid for readdir? Validate_ptr!!
 
     fs_readdir(p->open_files[fd], (struct dirent*) dirent);
     return ERR_OK;
@@ -503,20 +501,14 @@ sys_dup(void *arg)
 
     kassert(fetch_arg(arg, 1, &fd));
 
-    if (!validate_fd(fd)) {
+    if (!validate_fd((int) fd)) {
         return ERR_INVAL;
     }
 
     struct proc *p = proc_current();
+    //TODO: update reference count
 
-    for (int i = 0; i < PROC_MAX_ARG; i++) {
-        if (p->open_files[i] == NULL) {
-            p->open_files[i] = p->open_files[fd];
-            break;
-        }
-    }
-
-    return ERR_NOMEM;
+    return alloc_fd(p->open_files[fd]);
 }
 
 // int pipe(int* fds);
