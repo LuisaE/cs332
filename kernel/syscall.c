@@ -126,12 +126,12 @@ validate_ptr(void* ptr, size_t size)
 //             return i;
 //         }
 //     }
-//     // [Aaron] User error
+//     // [Aaron] User error 
 //     return -1;
 // }
 
 static bool validate_fd(int fd) {
-    // Invalid only if out of bounds 
+    // Invalid only if out of bounds - Check with Aaron: test takes long
     if (fd < 0 || fd >= PROC_MAX_ARG) {
         return False;
     }
@@ -243,11 +243,12 @@ sys_open(void *arg)
 
     struct file **file = NULL;
 
-    // if fs_open_file(pathname, flags, mode) returns ERR_OK, then return file.
+    // if fs_open_file(pathname, flags, mode) returns ERR_OK, then return fd.
     err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, file);
-    
+
     if (open_file_return == ERR_OK) {
         // Get file fd, how? [Aaron]
+        // Basic: Address and for loop? 
         return 0;
     }
 
@@ -267,12 +268,13 @@ sys_close(void *arg)
     }
 
     struct proc *p = proc_current();
-    p->open_files[fd]->f_ref -=1;
+    fs_close_file(p->open_files[fd]);
+
     return ERR_OK;
-    // CHECK W AARON
 }
 
 // int read(int fd, void *buf, size_t count);
+// BYTES LESS, how to deal? Aaron
 static sysret_t
 sys_read(void* arg)
 {
@@ -286,10 +288,18 @@ sys_read(void* arg)
         return ERR_FAULT;
     }
 
-    if (fd == 0) {
-        return console_read((void*)buf, (size_t)count);
+    if (!validate_fd(fd)) {
+        return ERR_INVAL;
     }
-    return ERR_INVAL;
+
+    struct proc *p = proc_current();
+    size_t bytes_read = fs_read_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
+
+    return bytes_read;
+
+    // if (fd == 0) {
+    //     return console_read((void*)buf, (size_t)count);
+    // }
 }
 
 // int write(int fd, const void *buf, size_t count)
@@ -306,11 +316,23 @@ sys_write(void* arg)
         return ERR_FAULT;
     }
 
-    if (fd == 1) {
-        // write some stuff for now assuming one string
-        return console_write((void*)buf, (size_t) count);
+    if (!validate_fd(fd)) {
+        return ERR_INVAL;
     }
-    return ERR_INVAL;
+
+    struct proc *p = proc_current();
+
+    ssize_t return_write = fs_write_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
+
+    if (return_write == -1) {
+        // Check with Aaron
+        return ERR_END;
+    }
+    // if (fd == 1) {
+    //     // write some stuff for now assuming one string
+    //     return console_write((void*)buf, (size_t) count);
+    // }
+    return return_write;
 }
 
 // int link(const char *oldpath, const char *newpath)
@@ -387,6 +409,7 @@ sys_chdir(void *arg)
 }
 
 // int readdir(int fd, struct dirent *dirent);
+// Aaron: how to check address dirent invalid for Err_fault? Do we use validade_ptr?
 static sysret_t
 sys_readdir(void *arg)
 {
@@ -410,9 +433,9 @@ sys_readdir(void *arg)
     }
 
     //dirent = (struct dirent*) p->open_files[fd+1];
-    fd += fd;
+    // Aaron: how to know which dir are valid for readdir?
 
-    fs_readdir(p->open_files[fd], (struct dirent*) dirent); // AARON
+    fs_readdir(p->open_files[fd], (struct dirent*) dirent);
     return ERR_OK;
 }
 
@@ -435,7 +458,26 @@ sys_rmdir(void *arg)
 static sysret_t
 sys_fstat(void *arg)
 {
-    panic("syscall fstat not implemented");
+    sysarg_t fd, stat;
+
+    kassert(fetch_arg(arg, 1, &fd));
+    kassert(fetch_arg(arg, 2, &stat));
+
+    if (!validate_ptr((void*)stat, sizeof(struct stat))) {
+        return ERR_FAULT;
+    }
+
+    if (!validate_fd(fd) || fd == 0 || fd == 1) {
+        return ERR_INVAL;
+    }
+
+    struct proc *p = proc_current();
+     
+    ((struct stat *) stat)->ftype = p->open_files[fd]->f_inode->i_ftype;
+    ((struct stat *) stat)->inode_num = p->open_files[fd]->f_inode->i_inum;
+    ((struct stat *) stat)->size = p->open_files[fd]->f_inode->i_size;
+
+    return ERR_OK;
 }
 
 // void *sbrk(size_t increment);
@@ -457,7 +499,24 @@ sys_meminfo(void *arg)
 static sysret_t
 sys_dup(void *arg)
 {
-    panic("syscall dup not implemented");
+    sysarg_t fd;
+
+    kassert(fetch_arg(arg, 1, &fd));
+
+    if (!validate_fd(fd)) {
+        return ERR_INVAL;
+    }
+
+    struct proc *p = proc_current();
+
+    for (int i = 0; i < PROC_MAX_ARG; i++) {
+        if (p->open_files[i] == NULL) {
+            p->open_files[i] = p->open_files[fd];
+            break;
+        }
+    }
+
+    return ERR_NOMEM;
 }
 
 // int pipe(int* fds);
