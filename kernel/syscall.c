@@ -132,7 +132,7 @@ static int alloc_fd(struct file *f) {
 
 static bool validate_fd(int fd) {
     // Invalid only if out of bounds
-    return !(fd < 0 || fd >= PROC_MAX_ARG);
+    return (fd >= 0 && fd <= PROC_MAX_ARG);
 }
 
 // int fork(void);
