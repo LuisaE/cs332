@@ -264,6 +264,8 @@ sys_close(void *arg)
 
     struct proc *p = proc_current();
     fs_close_file(p->open_files[fd]);
+    // Update open files
+    p->open_files[fd] = NULL;
 
     return ERR_OK;
 }
@@ -290,10 +292,6 @@ sys_read(void* arg)
     size_t bytes_read = fs_read_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 
     return bytes_read;
-
-    // if (fd == 0) {
-    //     return console_read((void*)buf, (size_t)count);
-    // }
 }
 
 // int write(int fd, const void *buf, size_t count)
@@ -321,10 +319,7 @@ sys_write(void* arg)
     if (return_write == -1) {
         return ERR_END;
     }
-    // if (fd == 1) {
-    //     // write some stuff for now assuming one string
-    //     return console_write((void*)buf, (size_t) count);
-    // }
+
     return return_write;
 }
 
@@ -402,7 +397,6 @@ sys_chdir(void *arg)
 }
 
 // int readdir(int fd, struct dirent *dirent);
-// Aaron: how to check address dirent invalid for Err_fault? Do we use validade_ptr?
 static sysret_t
 sys_readdir(void *arg)
 {
@@ -429,11 +423,8 @@ sys_readdir(void *arg)
         return ERR_END;
     }
 
-
-    //dirent = (struct dirent*) p->open_files[fd+1];
-    // Aaron: how to know which dir are valid for readdir? Validate_ptr!!
-
     fs_readdir(p->open_files[fd], (struct dirent*) dirent);
+
     return ERR_OK;
 }
 
@@ -471,6 +462,8 @@ sys_fstat(void *arg)
 
     struct proc *p = proc_current();
      
+    // Check if console dups fd stuff. Real files? Aaron
+
     ((struct stat *) stat)->ftype = p->open_files[fd]->f_inode->i_ftype;
     ((struct stat *) stat)->inode_num = p->open_files[fd]->f_inode->i_inum;
     ((struct stat *) stat)->size = p->open_files[fd]->f_inode->i_size;
@@ -506,9 +499,14 @@ sys_dup(void *arg)
     }
 
     struct proc *p = proc_current();
-    //TODO: update reference count
 
-    return alloc_fd(p->open_files[fd]);
+    int return_value = alloc_fd(p->open_files[fd]);
+    
+    if (return_value > 0) {
+        fs_reopen_file(p->open_files[fd]);
+    }
+
+    return return_value;
 }
 
 // int pipe(int* fds);

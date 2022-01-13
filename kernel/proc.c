@@ -108,6 +108,10 @@ proc_init(char* name)
     p->open_files[0] = &stdin;
     p->open_files[1] = &stdout;
 
+    for (int i = 2; i < PROC_MAX_ARG; i++) {
+        p->open_files[i] = NULL;
+    }
+
     return p;
 }
 
