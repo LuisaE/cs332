@@ -120,7 +120,7 @@ static int alloc_fd(struct file *f) {
     struct proc *p;
     p = proc_current();
 
-    for (int i = 2; i < PROC_MAX_ARG; i++) {
+    for (int i = 0; i < PROC_MAX_ARG; i++) {
         if (!(p->open_files[i])) {
             p->open_files[i] = f;
             return i;
