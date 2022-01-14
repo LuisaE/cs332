@@ -243,9 +243,11 @@ sys_open(void *arg)
     err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, &file);
 
     if (open_file_return == ERR_OK) {
+        // Add file returned by open_file to our open_files array
         return alloc_fd(file);
     }
 
+    // Return error code returned by fs_open_file
     return open_file_return;
 }
 
@@ -263,6 +265,7 @@ sys_close(void *arg)
 
     struct proc *p = proc_current();
 
+    // Check if fd points to a valid file
     if (!p->open_files[fd]) {
         return ERR_INVAL;
     }
@@ -299,9 +302,8 @@ sys_read(void* arg)
         return ERR_INVAL;
     }
 
-    size_t bytes_read = fs_read_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
-
-    return bytes_read;
+    // Return byte read or error code
+    return fs_read_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 }
 
 // int write(int fd, const void *buf, size_t count)
@@ -331,6 +333,7 @@ sys_write(void* arg)
     ssize_t return_write = fs_write_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 
     if (return_write == -1) {
+        // No data written to file
         return ERR_END;
     }
 
@@ -414,8 +417,8 @@ sys_chdir(void *arg)
 static sysret_t
 sys_readdir(void *arg)
 {
-    sysarg_t fd;
-    sysarg_t dirent;
+    sysarg_t fd, dirent;
+
     kassert(fetch_arg(arg, 1, &fd));
     kassert(fetch_arg(arg, 2, &dirent));
 
@@ -431,10 +434,6 @@ sys_readdir(void *arg)
 
     if (!p->open_files[fd]) {
         return ERR_INVAL;
-    }
-
-    if (fd + 1 == PROC_MAX_ARG) {
-        return ERR_END;
     }
 
     return fs_readdir(p->open_files[fd], (struct dirent*) dirent);
@@ -469,6 +468,7 @@ sys_fstat(void *arg)
     }
 
     if (!validate_fd(fd) || fd == 0 || fd == 1) {
+        // Console dup not valid
         return ERR_INVAL;
     }
 
@@ -477,9 +477,8 @@ sys_fstat(void *arg)
     if (!p->open_files[fd]) {
         return ERR_INVAL;
     }
-     
-    // Check if console dups fd stuff. Real files? Aaron
 
+    // Populating struct stat
     ((struct stat *) stat)->ftype = p->open_files[fd]->f_inode->i_ftype;
     ((struct stat *) stat)->inode_num = p->open_files[fd]->f_inode->i_inum;
     ((struct stat *) stat)->size = p->open_files[fd]->f_inode->i_size;
