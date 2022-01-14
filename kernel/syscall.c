@@ -233,18 +233,17 @@ sys_open(void *arg)
     kassert(fetch_arg(arg, 1, &pathname));
     kassert(fetch_arg(arg, 2, &flags));
     kassert(fetch_arg(arg, 3, &mode));
-
+    
     if (!validate_str((char*)pathname)) {
         return ERR_FAULT;
     }
 
-    struct file **file = NULL;
+    struct file *file;
 
-    // if fs_open_file(pathname, flags, mode) returns ERR_OK, then return fd.
-    err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, file);
+    err_t open_file_return = fs_open_file((char*) pathname, flags, (fmode_t) mode, &file);
 
     if (open_file_return == ERR_OK) {
-        return alloc_fd(*file);
+        return alloc_fd(file);
     }
 
     return open_file_return;
@@ -263,7 +262,13 @@ sys_close(void *arg)
     }
 
     struct proc *p = proc_current();
+
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
+    }
+
     fs_close_file(p->open_files[fd]);
+    
     // Update open files
     p->open_files[fd] = NULL;
 
@@ -289,6 +294,11 @@ sys_read(void* arg)
     }
 
     struct proc *p = proc_current();
+
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
+    }
+
     size_t bytes_read = fs_read_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 
     return bytes_read;
@@ -313,6 +323,10 @@ sys_write(void* arg)
     }
 
     struct proc *p = proc_current();
+
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
+    }
 
     ssize_t return_write = fs_write_file(p->open_files[fd], (void *) buf, (size_t) count, &(p->open_files[fd]->f_pos));
 
@@ -415,17 +429,15 @@ sys_readdir(void *arg)
 
     struct proc *p = proc_current();
 
-    if (p->open_files[fd] != NULL) {
-        return ERR_FTYPE;
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
     }
 
     if (fd + 1 == PROC_MAX_ARG) {
         return ERR_END;
     }
 
-    fs_readdir(p->open_files[fd], (struct dirent*) dirent);
-
-    return ERR_OK;
+    return fs_readdir(p->open_files[fd], (struct dirent*) dirent);
 }
 
 // int rmdir(const char *pathname);
@@ -461,6 +473,10 @@ sys_fstat(void *arg)
     }
 
     struct proc *p = proc_current();
+
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
+    }
      
     // Check if console dups fd stuff. Real files? Aaron
 
@@ -500,9 +516,13 @@ sys_dup(void *arg)
 
     struct proc *p = proc_current();
 
+    if (!p->open_files[fd]) {
+        return ERR_INVAL;
+    }
+
     int return_value = alloc_fd(p->open_files[fd]);
     
-    if (return_value > 0) {
+    if (return_value >= 0) {
         fs_reopen_file(p->open_files[fd]);
     }
 
