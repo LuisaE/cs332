@@ -107,6 +107,7 @@ proc_init(char* name)
 
     p->open_files[0] = &stdin;
     p->open_files[1] = &stdout;
+    p->proc_status = STATUS_ALIVE;
 
     for (int i = 2; i < PROC_MAX_ARG; i++) {
         p->open_files[i] = NULL;
@@ -169,7 +170,7 @@ proc_fork()
     kassert(proc_current());  // caller of fork must be a process 
     struct proc *p_parent = proc_current();
     struct proc *p_child = proc_init("HELLO"); // CHECK NAME
-    err_t copy_status = as_copy_as(p_parent->as, p_child->as);
+    err_t copy_status = as_copy_as(&p_parent->as, &p_child->as);
     for (int i = 0; i < PROC_MAX_ARG; i++)
     {
         p_child->open_files[i] = p_parent->open_files[i]; // CHECK LOGIC

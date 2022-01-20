@@ -191,23 +191,32 @@ sys_spawn(void *arg)
 // int wait(int pid, int *wstatus);
 static sysret_t
 sys_wait(void* arg)
-{
-    /* remove when writing your own solution */
-    for (;;) {}
-    panic("unreacchable");
+{   
+    // validate arguments
+    sysarg_t pid, *wstatus;
+
+    kassert(fetch_arg(arg, 1, &pid));
+    kassert(fetch_arg(arg, 2, wstatus));
+    
+    struct proc *p = proc_current();
+    // for (int *i = list_begin(&p->child_pid); i != list_end(&p->child_pid); i = list_next(i)) {
+    //     int pid = list_entry(i, struct proc, proc_node);
+    // }
+
+    if (!validate_ptr(wstatus, (size_t)wstatus)) {
+        return ERR_FAULT;
+    }
 }
 
 // void exit(int status);
 static sysret_t
 sys_exit(void* arg)
-{
-    // temp code for lab1 to terminate the kernel after one process exits
-    // remove for lab 2 
-    kprintf("shutting down\n");
-    shutdown();
-    kprintf("oops still running\n");
-    for(;;) {}
-    panic("syscall exit not implemented");
+{   
+
+    // validate arguments
+    sysarg_t status;
+    kassert(fetch_arg(arg, 1, &status));
+    proc_exit(status);
 }
 
 // int getpid(void);
