@@ -165,10 +165,18 @@ error:
 
 struct proc*
 proc_fork()
-{
-    kassert(proc_current());  // caller of fork must be a process
+{   
+    kassert(proc_current());  // caller of fork must be a process 
+    struct proc *p_parent = proc_current();
+    struct proc *p_child = proc_init("HELLO"); // CHECK NAME
+    err_t copy_status = as_copy_as(p_parent->as, p_child->as);
+    for (int i = 0; i < PROC_MAX_ARG; i++)
+    {
+        p_child->open_files[i] = p_parent->open_files[i]; // CHECK LOGIC
+        fs_reopen_file(p_parent->open_files[i]);
+    }
     
-    /* your code here */
+    
     return NULL;
 }
 

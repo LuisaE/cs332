@@ -20,6 +20,8 @@ struct proc {
     List threads;                       // list of threads belong to the process, right now just 1 per process
     Node proc_node;                     // used by ptable to keep track each process
     struct file *open_files[PROC_MAX_FILE];      // the file descriptor will be the respective index into the file table
+    int proc_status = STATUS_ALIVE;
+    List child_pid;
 };
 
 struct proc *init_proc;
