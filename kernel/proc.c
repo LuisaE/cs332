@@ -123,6 +123,7 @@ proc_init(char* name)
     p->open_files[1] = &stdout;
     p->proc_status = STATUS_ALIVE;
     list_init(&p->child_pid);
+    condvar_init(&p->wait_cv);
 
     for (int i = 2; i < PROC_MAX_ARG; i++) {
         p->open_files[i] = NULL;
@@ -225,8 +226,6 @@ proc_fork()
     list_append(&(p_parent->child_pid), &p_child->proc_node);
 
     *t->tf = *thread_current()->tf;
-
-
     tf_set_return(t->tf, 0);
     
     return p_child;
@@ -263,6 +262,13 @@ int
 proc_wait(pid_t pid, int* status)
 {
     /* your code here */
+    struct proc *proc_child = get_proc_by_pid(pid);
+
+    if (proc_child) {
+        while (proc_child->proc_status == STATUS_ALIVE) {
+            condvar_wait(&proc_child->wait_cv, &ptable_lock);
+        }
+    }
 
     return pid;
 }
@@ -283,8 +289,9 @@ proc_exit(int status)
 
     // release process's cwd
     fs_release_inode(p->cwd);
- 
-    /* your code here */
+
+    // Signal to parent process that process exited
+    condvar_signal(&p->wait_cv);
 
     // save status so parent can access it
     p->proc_status = status;
@@ -294,7 +301,16 @@ proc_exit(int status)
         fs_close_file(p->open_files[i]);
     }
 
-    //TODO: remove child node from parent child_pid
+    // Parent exits without waiting for child
+    for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
+        struct proc *child_p = list_entry(n, struct proc, proc_node);
+        // parent exited without waiting, handing off its children
+        if (child_p->proc_status == STATUS_ALIVE) {
+            list_append(&init_proc->child_pid, &child_p->proc_node);
+        }
+        // remove exited or handed off child process
+        list_remove(&child_p->proc_node);
+    }
 
     proc_free(p);
 

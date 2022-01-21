@@ -22,6 +22,7 @@ struct proc {
     struct file *open_files[PROC_MAX_FILE];      // the file descriptor will be the respective index into the file table
     int proc_status;
     List child_pid;
+    struct condvar wait_cv;
 };
 
 struct proc *init_proc;
