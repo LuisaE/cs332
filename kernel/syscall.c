@@ -193,19 +193,35 @@ static sysret_t
 sys_wait(void* arg)
 {   
     // validate arguments
-    sysarg_t pid, *wstatus;
+    sysarg_t pid, wstatus;
 
     kassert(fetch_arg(arg, 1, &pid));
-    kassert(fetch_arg(arg, 2, wstatus));
-    
-    struct proc *p = proc_current();
-    // for (int *i = list_begin(&p->child_pid); i != list_end(&p->child_pid); i = list_next(i)) {
-    //     int pid = list_entry(i, struct proc, proc_node);
-    // }
+    kassert(fetch_arg(arg, 2, &wstatus));
 
-    if (!validate_ptr(wstatus, (size_t)wstatus)) {
+    if (!validate_ptr((void *) wstatus, (size_t) wstatus)) {
         return ERR_FAULT;
     }
+    
+    // Check if parent process has a child with pid
+    struct proc *p = proc_current();
+
+    // Search linked list of proc structs
+    for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
+        struct proc *child_p = list_entry(n, struct proc, proc_node);
+        if (pid == child_p->pid) {
+            // Found, check if the parent already waited on child
+            if (child_p->proc_status == STATUS_ALIVE) {
+                return proc_wait(pid, (int *) wstatus);
+            } else {
+                // Already waited on child
+                return ERR_CHILD;
+            }
+        }
+    }
+
+    // No child with pid
+    return ERR_CHILD;
+
 }
 
 // void exit(int status);
@@ -217,6 +233,8 @@ sys_exit(void* arg)
     sysarg_t status;
     kassert(fetch_arg(arg, 1, &status));
     proc_exit(status);
+
+    return 0;
 }
 
 // int getpid(void);

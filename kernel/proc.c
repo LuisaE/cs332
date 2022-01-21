@@ -69,6 +69,20 @@ proc_sys_init(void)
     kassert(proc_allocator);
 }
 
+struct proc*
+get_proc_by_pid(pid_t pid)
+{
+    for (Node *n = list_begin(&ptable); n != list_end(&ptable); n = list_next(n)) {
+        struct proc *p = list_entry(n, struct proc, proc_node);
+        if (p->pid == pid) {
+            return p;
+        }
+    }
+
+    // No process with specified pid
+    return NULL;
+}
+
 /*
  * Allocate and initialize basic proc structure
 */
@@ -167,18 +181,51 @@ error:
 struct proc*
 proc_fork()
 {   
+    struct thread *t;
+
     kassert(proc_current());  // caller of fork must be a process 
+    
     struct proc *p_parent = proc_current();
-    struct proc *p_child = proc_init("HELLO"); // CHECK NAME
+
+    // Name as parent for now, may want to concatenate child
+    struct proc *p_child = proc_init(p_parent->name);
+
+    // Child must have its own address space
     err_t copy_status = as_copy_as(&p_parent->as, &p_child->as);
+
+    if (copy_status != ERR_OK) {
+        return NULL;
+    }
+
+    // Duplicate open files
     for (int i = 0; i < PROC_MAX_ARG; i++)
     {
-        p_child->open_files[i] = p_parent->open_files[i]; // CHECK LOGIC
-        fs_reopen_file(p_parent->open_files[i]);
+        p_child->open_files[i] = p_parent->open_files[i]; // Right way?
+        fs_reopen_file(p_child->open_files[i]);
     }
+
+    if ((t = thread_create(p_child->name, p_child, DEFAULT_PRI)) == NULL) {
+        as_destroy(&p_child->as);
+        proc_free(p_child);
+        return NULL; //ERR_NOMEM
+    }
+
+    // add to ptable
+    spinlock_acquire(&ptable_lock);
+    list_append(&ptable, &p_child->proc_node);
+    spinlock_release(&ptable_lock);
     
+    // is it that simple?
+    p_child = p_parent;
+
+    // Add child pid to parent child_pid
+    list_append(&(p_parent->child_pid), &p_child->proc_node);
+
+    // Aaron!
+    //struct trapframe *tf;
+    //tf_set_return(tf, 0);
     
-    return NULL;
+    return p_child;
 }
 
 struct proc*
@@ -212,6 +259,7 @@ int
 proc_wait(pid_t pid, int* status)
 {
     /* your code here */
+
     return pid;
 }
 
