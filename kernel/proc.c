@@ -122,6 +122,7 @@ proc_init(char* name)
     p->open_files[0] = &stdin;
     p->open_files[1] = &stdout;
     p->proc_status = STATUS_ALIVE;
+    list_init(&p->child_pid);
 
     for (int i = 2; i < PROC_MAX_ARG; i++) {
         p->open_files[i] = NULL;
@@ -200,8 +201,10 @@ proc_fork()
     // Duplicate open files
     for (int i = 0; i < PROC_MAX_ARG; i++)
     {
-        p_child->open_files[i] = p_parent->open_files[i]; // Right way?
-        fs_reopen_file(p_child->open_files[i]);
+        if (p_parent->open_files[i]) {
+            p_child->open_files[i] = p_parent->open_files[i];
+            fs_reopen_file(p_child->open_files[i]);
+        }
     }
 
     if ((t = thread_create(p_child->name, p_child, DEFAULT_PRI)) == NULL) {
@@ -214,16 +217,17 @@ proc_fork()
     spinlock_acquire(&ptable_lock);
     list_append(&ptable, &p_child->proc_node);
     spinlock_release(&ptable_lock);
-    
+
     // is it that simple?
     p_child = p_parent;
 
     // Add child pid to parent child_pid
     list_append(&(p_parent->child_pid), &p_child->proc_node);
 
-    // Aaron!
-    //struct trapframe *tf;
-    //tf_set_return(tf, 0);
+    *t->tf = *thread_current()->tf;
+
+
+    tf_set_return(t->tf, 0);
     
     return p_child;
 }
@@ -281,6 +285,18 @@ proc_exit(int status)
     fs_release_inode(p->cwd);
  
     /* your code here */
+
+    // save status so parent can access it
+    p->proc_status = status;
+
+    // close open files
+    for (int i = 0; i < PROC_MAX_ARG; i++) {
+        fs_close_file(p->open_files[i]);
+    }
+
+    //TODO: remove child node from parent child_pid
+
+    proc_free(p);
 
     thread_exit(status);
 }

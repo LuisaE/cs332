@@ -197,7 +197,7 @@ sys_wait(void* arg)
 
     kassert(fetch_arg(arg, 1, &pid));
     kassert(fetch_arg(arg, 2, &wstatus));
-
+    
     if (!validate_ptr((void *) wstatus, (size_t) wstatus)) {
         return ERR_FAULT;
     }
@@ -221,7 +221,6 @@ sys_wait(void* arg)
 
     // No child with pid
     return ERR_CHILD;
-
 }
 
 // void exit(int status);
@@ -234,7 +233,7 @@ sys_exit(void* arg)
     kassert(fetch_arg(arg, 1, &status));
     proc_exit(status);
 
-    return 0;
+    return 0; // Should never return?
 }
 
 // int getpid(void);
