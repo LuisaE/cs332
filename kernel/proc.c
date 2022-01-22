@@ -262,12 +262,27 @@ int
 proc_wait(pid_t pid, int* status)
 {
     /* your code here */
-    struct proc *proc_child = get_proc_by_pid(pid);
+    if (pid != -1) {
+        struct proc *proc_child = get_proc_by_pid(pid);
+        
+        if (proc_child) {
+            spinlock_acquire(&ptable_lock); //Check, it this right?
+            while (proc_child->proc_status == STATUS_ALIVE) {
+                kprintf("Before\n");
+                condvar_wait(&proc_child->wait_cv, &ptable_lock);
+                kprintf("after\n");
+            }
+            kprintf("Exited!\n");
+            spinlock_release(&ptable_lock);
 
-    if (proc_child) {
-        while (proc_child->proc_status == STATUS_ALIVE) {
-            condvar_wait(&proc_child->wait_cv, &ptable_lock);
+            // communicate exit status
+            if (!status) {
+                *status = proc_child->proc_status;
+            }
         }
+    } else {
+        // wait any, not sure how to implement this, first check if there is at east one not waited
+        
     }
 
     return pid;
@@ -290,9 +305,6 @@ proc_exit(int status)
     // release process's cwd
     fs_release_inode(p->cwd);
 
-    // Signal to parent process that process exited
-    condvar_signal(&p->wait_cv);
-
     // save status so parent can access it
     p->proc_status = status;
 
@@ -311,6 +323,9 @@ proc_exit(int status)
         // remove exited or handed off child process
         list_remove(&child_p->proc_node);
     }
+
+    // Signal to parent process that process exited
+    condvar_signal(&p->wait_cv);
 
     proc_free(p);
 

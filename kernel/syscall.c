@@ -225,7 +225,7 @@ sys_wait(void* arg)
         }
     } else {
         // wait any
-        return proc_wait((pid_t) pid, (int *) wstatus);
+        //return proc_wait((pid_t) pid, (int *) wstatus);
     }
 
     // No child with pid or impossible pid
