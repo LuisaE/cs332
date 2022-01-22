@@ -23,6 +23,7 @@ struct proc {
     int proc_status;
     List child_pid;
     struct condvar wait_cv;
+    struct spinlock child_pid_lock;
 };
 
 struct proc *init_proc;

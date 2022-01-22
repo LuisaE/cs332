@@ -177,7 +177,8 @@ condvar_init(struct condvar* cv)
 
 void
 condvar_wait(struct condvar* cv, void* lock)
-{
+{   
+    // kprintf("In condvar_wait 1 \n");
     if (!synch_enabled) {
         return;
     }
@@ -190,6 +191,7 @@ condvar_wait(struct condvar* cv, void* lock)
         kassert(((struct sleeplock*)lock)->holder == t);
     }
 
+    // kprintf("In condvar_wait 2 \n");
     // add to cv's waiter list, cv is protected by the lock
     list_append(&cv->waiters, &t->node);
     // put ourselves to sleep and wake up next lock holder
