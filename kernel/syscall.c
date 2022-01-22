@@ -217,6 +217,7 @@ sys_wait(void* arg)
             if (pid == child_p->pid) {
                 // Found, check if the parent already waited on child
                 if (child_p->proc_status == STATUS_ALIVE) {
+                    spinlock_release(&p->child_pid_lock);
                     return proc_wait((pid_t) pid, (int *) wstatus);
                 } else {
                     // Already waited on child
@@ -224,19 +225,19 @@ sys_wait(void* arg)
                 }
             }
         }
-        spinlock_release(&p->child_pid_lock);
     } else {
         // select the first running child process if pid == -1
         spinlock_acquire(&p->child_pid_lock);
         for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
             struct proc *child_p = list_entry(n, struct proc, proc_node);
             if (child_p->proc_status == STATUS_ALIVE) {
+                spinlock_release(&p->child_pid_lock);
                 return proc_wait((pid_t) child_p->pid, (int *) wstatus);
             }
         }
-        spinlock_release(&p->child_pid_lock);
     }
 
+    spinlock_release(&p->child_pid_lock);
     // No child with pid or impossible pid
     return ERR_CHILD;
 }
