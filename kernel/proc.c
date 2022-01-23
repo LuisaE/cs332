@@ -193,12 +193,19 @@ proc_fork()
     // Name as parent for now, may want to concatenate child
     struct proc *p_child = proc_init(p_parent->name);
 
+    if (!p_child) {
+        return NULL;
+    }
+
     // Child must have its own address space
     err_t copy_status = as_copy_as(&p_parent->as, &p_child->as);
 
     if (copy_status != ERR_OK) {
         return NULL;
     }
+
+    // Aaron Check
+    //*p_child = *p_parent;
 
     // Duplicate open files
     for (int i = 0; i < PROC_MAX_ARG; i++)
@@ -220,9 +227,6 @@ proc_fork()
     list_append(&ptable, &p_child->proc_node);
     spinlock_release(&ptable_lock);
 
-    // is it that simple?
-    p_child = p_parent;
-
     // Add child pid to parent child_pid
     spinlock_acquire(&p_parent->child_pid_lock);
     list_append(&p_parent->child_pid, &p_child->proc_node);
@@ -230,6 +234,7 @@ proc_fork()
 
     *t->tf = *thread_current()->tf;
     tf_set_return(t->tf, 0);
+    thread_start_context(t, NULL, NULL);
     
     return p_child;
 }
@@ -267,20 +272,17 @@ proc_wait(pid_t pid, int* status)
     
     // Assuming that pid is a specific child process (not -1)
     struct proc *proc_child = get_proc_by_pid(pid);
-    kprintf("pid %d \n", proc_child->pid);
 
     spinlock_acquire(&ptable_lock); // Check, it this right?
     while (proc_child->proc_status == STATUS_ALIVE) {
-        kprintf("status %x\n", proc_child->proc_status);
         condvar_wait(&proc_child->wait_cv, &ptable_lock);
-        kprintf("after\n");
     }
-    kprintf("Exited!\n");
     spinlock_release(&ptable_lock);
-
-    kprintf("Here in wait!\n");
+    
+    kprintf("After waited\n");
     // communicate exit status
     if (!status) {
+        // Issue here, no status as we clean that up in exit!
         *status = proc_child->proc_status;
     }
     
@@ -290,7 +292,6 @@ proc_wait(pid_t pid, int* status)
 void
 proc_exit(int status)
 {
-    kprintf("Exit was called!\n");
     struct thread *t = thread_current();
     struct proc *p = proc_current();
 
@@ -333,7 +334,7 @@ proc_exit(int status)
     condvar_signal(&p->wait_cv);
     //spinlock_release(&ptable_lock);
 
-    proc_free(p);
+    proc_free(p); // Can't do this, otherwise there's no way to get status in wait
 
     thread_exit(status);
 }
