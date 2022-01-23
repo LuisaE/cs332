@@ -125,6 +125,7 @@ proc_init(char* name)
     list_init(&p->child_pid);
     spinlock_init(&p->child_pid_lock);
     condvar_init(&p->wait_cv);
+    p->parent_pid = NULL;
 
     for (int i = 2; i < PROC_MAX_ARG; i++) {
         p->open_files[i] = NULL;
@@ -206,8 +207,10 @@ proc_fork()
 
     // Aaron Check
     //*p_child = *p_parent;
+    p_child->parent_pid = p_parent->pid;
 
     // Duplicate open files
+    spinlock_acquire(&ptable_lock);
     for (int i = 0; i < PROC_MAX_ARG; i++)
     {
         if (p_parent->open_files[i]) {
@@ -215,6 +218,7 @@ proc_fork()
             fs_reopen_file(p_child->open_files[i]);
         }
     }
+    spinlock_release(&ptable_lock);
 
     if ((t = thread_create(p_child->name, p_child, DEFAULT_PRI)) == NULL) {
         as_destroy(&p_child->as);
@@ -279,13 +283,19 @@ proc_wait(pid_t pid, int* status)
     }
     spinlock_release(&ptable_lock);
     
-    kprintf("After waited\n");
     // communicate exit status
     if (!status) {
-        // Issue here, no status as we clean that up in exit!
-        *status = proc_child->proc_status;
+        status = &proc_child->proc_status;
     }
-    
+
+    struct proc *p = proc_current();
+
+    // remove from child_pid
+    spinlock_acquire(&p->child_pid_lock);
+    list_remove(&proc_child->proc_node);
+    spinlock_release(&p->child_pid_lock);
+    proc_free(proc_child);
+
     return pid;
 }
 
@@ -322,6 +332,7 @@ proc_exit(int status)
         struct proc *child_p = list_entry(n, struct proc, proc_node);
         // parent exited without waiting, handing off its children
         if (child_p->proc_status == STATUS_ALIVE) {
+            child_p->parent_pid = init_proc->pid;
             list_append(&init_proc->child_pid, &child_p->proc_node);
         }
         // remove exited or handed off child process
@@ -329,12 +340,18 @@ proc_exit(int status)
     }
     spinlock_release(&p->child_pid_lock);
 
-    // Signal to parent process that process exited
-    //spinlock_acquire(&ptable_lock);
-    condvar_signal(&p->wait_cv);
-    //spinlock_release(&ptable_lock);
+    if (p->parent_pid) {
+        // If parent not null, check if parent exited
+        struct proc *parent = get_proc_by_pid(p->parent_pid);
+        if (parent->proc_status != STATUS_ALIVE) {
+            proc_free(p);
+        }
+    }
 
-    proc_free(p); // Can't do this, otherwise there's no way to get status in wait
+    // Signal to parent process that process exited
+    spinlock_acquire(&ptable_lock);
+    condvar_signal(&p->wait_cv);
+    spinlock_release(&ptable_lock);
 
     thread_exit(status);
 }

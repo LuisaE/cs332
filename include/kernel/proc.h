@@ -24,6 +24,7 @@ struct proc {
     List child_pid;
     struct condvar wait_cv;
     struct spinlock child_pid_lock;
+    int parent_pid;
 };
 
 struct proc *init_proc;
