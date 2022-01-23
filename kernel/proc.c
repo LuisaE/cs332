@@ -126,6 +126,7 @@ proc_init(char* name)
     spinlock_init(&p->child_pid_lock);
     condvar_init(&p->wait_cv);
     p->parent_pid = NULL;
+    p->was_waited = False;
 
     for (int i = 2; i < PROC_MAX_ARG; i++) {
         p->open_files[i] = NULL;
@@ -283,6 +284,8 @@ proc_wait(pid_t pid, int* status)
     }
     spinlock_release(&ptable_lock);
     
+    proc_child->was_waited = True;
+
     // communicate exit status
     if (!status) {
         status = &proc_child->proc_status;
@@ -334,6 +337,10 @@ proc_exit(int status)
         if (child_p->proc_status == STATUS_ALIVE) {
             child_p->parent_pid = init_proc->pid;
             list_append(&init_proc->child_pid, &child_p->proc_node);
+        } else {
+            // already exited, parent didn't wait
+            kassert(child_p->was_waited == False);
+            proc_free(child_p);
         }
         // remove exited or handed off child process
         list_remove(&child_p->proc_node);

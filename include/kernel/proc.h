@@ -25,6 +25,7 @@ struct proc {
     struct condvar wait_cv;
     struct spinlock child_pid_lock;
     int parent_pid;
+    bool was_waited;
 };
 
 struct proc *init_proc;
