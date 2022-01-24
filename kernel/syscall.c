@@ -198,7 +198,7 @@ sys_wait(void* arg)
     kassert(fetch_arg(arg, 1, &pid));
     kassert(fetch_arg(arg, 2, &wstatus));
 
-    if (wstatus && !validate_ptr((void *) wstatus, (size_t) wstatus)) {
+    if (wstatus && !validate_ptr((void *) wstatus, sizeof(wstatus))) {
         return ERR_FAULT;
     }
 

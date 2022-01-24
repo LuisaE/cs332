@@ -287,8 +287,8 @@ proc_wait(pid_t pid, int* status)
     proc_child->was_waited = True;
 
     // communicate exit status
-    if (!status) {
-        status = &proc_child->proc_status;
+    if (status) {
+        *status = proc_child->proc_status;
     }
 
     struct proc *p = proc_current();
