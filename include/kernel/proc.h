@@ -21,14 +21,14 @@ struct proc {
     Node proc_node;                     // used by ptable to keep track each process
     struct file *open_files[PROC_MAX_FILE];      // the file descriptor will be the respective index into the file table
     int proc_status;
-    List child_pid;
     struct condvar wait_cv;
-    struct spinlock child_pid_lock;
     int parent_pid;
     bool was_waited;
 };
 
 struct proc *init_proc;
+
+struct proc* get_proc_by_pid(pid_t pid);
 
 void proc_sys_init(void);
 

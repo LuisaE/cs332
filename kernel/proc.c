@@ -72,13 +72,15 @@ proc_sys_init(void)
 struct proc*
 get_proc_by_pid(pid_t pid)
 {
+    spinlock_acquire(&ptable_lock);
     for (Node *n = list_begin(&ptable); n != list_end(&ptable); n = list_next(n)) {
         struct proc *p = list_entry(n, struct proc, proc_node);
         if (p->pid == pid) {
+            spinlock_release(&ptable_lock);
             return p;
         }
     }
-
+    spinlock_release(&ptable_lock);
     // No process with specified pid
     return NULL;
 }
@@ -122,8 +124,6 @@ proc_init(char* name)
     p->open_files[0] = &stdin;
     p->open_files[1] = &stdout;
     p->proc_status = STATUS_ALIVE;
-    list_init(&p->child_pid);
-    spinlock_init(&p->child_pid_lock);
     condvar_init(&p->wait_cv);
     p->parent_pid = NULL;
     p->was_waited = False;
@@ -232,11 +232,6 @@ proc_fork()
     list_append(&ptable, &p_child->proc_node);
     spinlock_release(&ptable_lock);
 
-    // Add child pid to parent child_pid
-    spinlock_acquire(&p_parent->child_pid_lock);
-    list_append(&p_parent->child_pid, &p_child->proc_node);
-    spinlock_release(&p_parent->child_pid_lock);
-
     *t->tf = *thread_current()->tf;
     tf_set_return(t->tf, 0);
     thread_start_context(t, NULL, NULL);
@@ -274,7 +269,28 @@ proc_detach_thread(struct thread *t)
 int
 proc_wait(pid_t pid, int* status)
 {
-    
+    struct proc *p = proc_current();
+
+    if (pid == -1) {
+        spinlock_acquire(&ptable_lock);
+        for (Node *n = list_begin(&ptable); n != list_end(&ptable); n = list_next(n)) {
+            struct proc *p_temp = list_entry(n, struct proc, proc_node);
+            // check if its the process child
+            if (p_temp->parent_pid == p->pid) {
+                if (!p_temp->was_waited) {
+                    // run proc wait normally
+                    pid = p_temp->pid;
+                    break;
+                }
+            }
+        }
+        spinlock_release(&ptable_lock);
+        if (pid == -1) {
+            // if pid is still -1, it didn't find a child
+            return NULL;
+        }
+    }
+
     // Assuming that pid is a specific child process (not -1)
     struct proc *proc_child = get_proc_by_pid(pid);
 
@@ -282,7 +298,6 @@ proc_wait(pid_t pid, int* status)
     while (proc_child->proc_status == STATUS_ALIVE) {
         condvar_wait(&proc_child->wait_cv, &ptable_lock);
     }
-    spinlock_release(&ptable_lock);
     
     proc_child->was_waited = True;
 
@@ -291,13 +306,10 @@ proc_wait(pid_t pid, int* status)
         *status = proc_child->proc_status;
     }
 
-    struct proc *p = proc_current();
-
     // remove from child_pid
-    spinlock_acquire(&p->child_pid_lock);
     list_remove(&proc_child->proc_node);
-    spinlock_release(&p->child_pid_lock);
     proc_free(proc_child);
+    spinlock_release(&ptable_lock);
 
     return pid;
 }
@@ -319,9 +331,6 @@ proc_exit(int status)
     // release process's cwd
     fs_release_inode(p->cwd);
 
-    // save status so parent can access it
-    p->proc_status = status;
-
     // close open files
     for (int i = 0; i < PROC_MAX_ARG; i++) {
         if (p->open_files[i]) {
@@ -330,22 +339,23 @@ proc_exit(int status)
     }
 
     // Parent exits without waiting for child
-    spinlock_acquire(&p->child_pid_lock);
-    for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
-        struct proc *child_p = list_entry(n, struct proc, proc_node);
-        // parent exited without waiting, handing off its children
-        if (child_p->proc_status == STATUS_ALIVE) {
-            child_p->parent_pid = init_proc->pid;
-            list_append(&init_proc->child_pid, &child_p->proc_node);
-        } else {
-            // already exited, parent didn't wait
-            kassert(child_p->was_waited == False);
-            proc_free(child_p);
+    spinlock_acquire(&ptable_lock);
+    for (Node *n = list_begin(&ptable); n != list_end(&ptable); n = list_next(n)) {
+        struct proc *p_temp = list_entry(n, struct proc, proc_node);
+        // check if its the process child
+        if (p_temp->parent_pid == p->pid) {
+            if (p_temp->proc_status == STATUS_ALIVE) {
+                p_temp->parent_pid = init_proc->pid;
+            } else {
+                //already exited, parent didn't wait. As parent is exiting, we can remove
+                kassert(p_temp->was_waited == False);
+                // remove from ptable
+                list_remove(&p_temp->proc_node);
+                proc_free(p_temp);
+            }
         }
-        // remove exited or handed off child process
-        list_remove(&child_p->proc_node);
     }
-    spinlock_release(&p->child_pid_lock);
+    spinlock_release(&ptable_lock);
 
     if (p->parent_pid) {
         // If parent not null, check if parent exited
@@ -357,6 +367,8 @@ proc_exit(int status)
 
     // Signal to parent process that process exited
     spinlock_acquire(&ptable_lock);
+    // save status so parent can access it
+    p->proc_status = status;
     condvar_signal(&p->wait_cv);
     spinlock_release(&ptable_lock);
 

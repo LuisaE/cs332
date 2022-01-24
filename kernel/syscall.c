@@ -211,33 +211,22 @@ sys_wait(void* arg)
 
     if ((int) pid != -1) {
         // Search linked list of proc structs
-        spinlock_acquire(&p->child_pid_lock);
-        for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
-            struct proc *child_p = list_entry(n, struct proc, proc_node);
-            if (pid == child_p->pid) {
-                // Found, check if the parent already waited on child
+        struct proc *child_p = get_proc_by_pid((pid_t) pid);
+        if (child_p) {
+            if (child_p->parent_pid == p->pid) {
                 if (!child_p->was_waited) {
-                    spinlock_release(&p->child_pid_lock);
                     return proc_wait((pid_t) pid, (int *) wstatus);
-                } else {
-                    // Already waited on child
-                    break;
                 }
             }
         }
     } else {
         // select the first running child process if pid == -1
-        spinlock_acquire(&p->child_pid_lock);
-        for (Node *n = list_begin(&p->child_pid); n != list_end(&p->child_pid); n = list_next(n)) {
-            struct proc *child_p = list_entry(n, struct proc, proc_node);
-            if (!child_p->was_waited) {
-                spinlock_release(&p->child_pid_lock);
-                return proc_wait((pid_t) child_p->pid, (int *) wstatus);
-            }
+        int result = proc_wait((pid_t) pid, (int *) wstatus);
+        if (result) {
+            return result;
         }
     }
 
-    spinlock_release(&p->child_pid_lock);
     // No child with pid or impossible pid
     return ERR_CHILD;
 }
