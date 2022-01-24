@@ -332,6 +332,7 @@ proc_exit(int status)
     fs_release_inode(p->cwd);
 
     // close open files
+    spinlock_acquire(&ptable_lock);
     for (int i = 0; i < PROC_MAX_ARG; i++) {
         if (p->open_files[i]) {
             fs_close_file(p->open_files[i]);
@@ -339,7 +340,6 @@ proc_exit(int status)
     }
 
     // Parent exits without waiting for child
-    spinlock_acquire(&ptable_lock);
     for (Node *n = list_begin(&ptable); n != list_end(&ptable); n = list_next(n)) {
         struct proc *p_temp = list_entry(n, struct proc, proc_node);
         // check if its the process child
