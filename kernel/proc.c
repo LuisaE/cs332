@@ -152,10 +152,13 @@ proc_spawn(char* name, char** argv, struct proc **p)
         goto error;
     }
 
-
     // set up stack and allocate its memregion 
     if ((err = stack_setup(proc, argv, &stackptr)) != ERR_OK) {
         goto error;
+    }
+
+    if (proc_current()) {
+        proc->parent_pid = proc_current()->pid;
     }
 
     if ((t = thread_create(proc->name, proc, DEFAULT_PRI)) == NULL) {
@@ -206,8 +209,6 @@ proc_fork()
         return NULL;
     }
 
-    // Aaron Check
-    //*p_child = *p_parent;
     p_child->parent_pid = p_parent->pid;
 
     // Duplicate open files
