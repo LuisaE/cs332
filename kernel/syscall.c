@@ -566,7 +566,35 @@ sys_dup(void *arg)
 static sysret_t
 sys_pipe(void* arg)
 {
-    panic("syscall pipe not implemented");
+    sysarg_t fds;
+
+    kassert(fetch_arg(arg, 1, &fds));
+
+    int *fds = (int *) fds;
+
+    // if (!validate_fd((int) fds[0]) || !validate_fd((int) fds[1])) {
+    //     return ERR_FAULT;
+    // }
+
+    // int read_fd = fds[0];
+    // int write_fd = fds[1];
+
+    // if (read_fd == ERR_NOMEM || write_fd == ERR_NOMEM) {
+    //     // fd not available
+    //     return ERR_NOMEM;
+    // }
+
+    // struct proc *p = proc_current();
+
+    // if (!p->open_files[read_fd]) {
+    //     // No open read descriptor when proc wants to write
+    //     return ERR_END;
+    // }
+
+    // if (!p->open_files[write_fd]) {
+
+    // }
+
 }
 
 // void sys_info(struct sys_info *info);
