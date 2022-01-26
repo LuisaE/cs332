@@ -570,30 +570,35 @@ sys_pipe(void* arg)
 
     kassert(fetch_arg(arg, 1, &fds));
 
-    int *fds = (int *) fds;
+    if (!validate_ptr((void *) fds, sizeof(fds))) {
+        return ERR_FAULT;
+    }
 
-    // if (!validate_fd((int) fds[0]) || !validate_fd((int) fds[1])) {
-    //     return ERR_FAULT;
-    // }
+    int read_fd = *((int *) fds); // fds 0
+    int write_fd = *(((int *) fds) + 1); // fds 1
 
-    // int read_fd = fds[0];
-    // int write_fd = fds[1];
+    if (!validate_fd(read_fd) || !validate_fd(write_fd)) {
+        return ERR_FAULT;
+    }
 
-    // if (read_fd == ERR_NOMEM || write_fd == ERR_NOMEM) {
-    //     // fd not available
-    //     return ERR_NOMEM;
-    // }
+    // Aaron, how to check if fd available?
+    if (read_fd == ERR_NOMEM || write_fd == ERR_NOMEM) {
+        // fd not available
+        return ERR_NOMEM;
+    }
 
-    // struct proc *p = proc_current();
+    struct proc *p = proc_current();
 
-    // if (!p->open_files[read_fd]) {
-    //     // No open read descriptor when proc wants to write
-    //     return ERR_END;
-    // }
+    if (!p->open_files[read_fd]) {
+        // No open read descriptor when proc wants to write
+        return ERR_END;
+    }
 
-    // if (!p->open_files[write_fd]) {
+    if (!p->open_files[write_fd]) {
+        // No open write fd when proc wants to read
+    }
 
-    // }
+    return ERR_OK;
 
 }
 

@@ -1,4 +1,4 @@
-// BBQ.h 
+// bbq.h 
 // Thread-safe blocking queue.
 
 #ifndef _BBQ_H_

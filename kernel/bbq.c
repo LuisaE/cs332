@@ -2,7 +2,7 @@
 // thread-safe blocking queue
 
 #include <kernel/kmalloc.h>
-#include "bbq.h"
+#include <kernel/bbq.h>
 
 // static prevents this variable from being visible outside this file
 static struct kmem_cache *bbq_allocator;
@@ -46,9 +46,10 @@ bbq* bbq_init() {
 
   // if the allocator has not been created yet, do so now
   if (bbq_allocator == NULL) {
-    if ((bbq_allocator = kmem_cache_allocator(sizeof(bbq))) == NULL) {
-      return NULL;
-    }
+    // ERROR HERE, check with Aaron
+    // if ((bbq_allocator = kmem_cache_alloc(sizeof(bbq))) == NULL) {
+    //   return NULL;
+    // }
   }
 
   // allocate the BBQ struct
@@ -61,6 +62,8 @@ bbq* bbq_init() {
   spinlock_init(&q->lock);
   condvar_init(&q->item_added);
   condvar_init(&q->item_removed);
+
+  return q;
 }
 
 void bbq_free(bbq *q) {
