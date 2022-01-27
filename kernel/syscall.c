@@ -581,13 +581,14 @@ sys_pipe(void* arg)
         return ERR_FAULT;
     }
 
+    struct proc *p = proc_current();
+
     // Aaron, how to check if fd available?
-    if (read_fd == ERR_NOMEM || write_fd == ERR_NOMEM) {
+    if ((read_fd = alloc_fd(p->open_files[read_fd])) == ERR_NOMEM ||
+        (write_fd = alloc_fd(p->open_files[write_fd])) == ERR_NOMEM) {
         // fd not available
         return ERR_NOMEM;
     }
-
-    struct proc *p = proc_current();
 
     if (!p->open_files[read_fd]) {
         // No open read descriptor when proc wants to write
