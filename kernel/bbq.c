@@ -46,10 +46,10 @@ bbq* bbq_init() {
 
   // if the allocator has not been created yet, do so now
   if (bbq_allocator == NULL) {
-    // ERROR HERE, check with Aaron
-    // if ((bbq_allocator = kmem_cache_alloc(sizeof(bbq))) == NULL) {
-    //   return NULL;
-    // }
+    // Check with Aaron: error. Was sizeof(BBQ)
+    if ((bbq_allocator = kmem_cache_alloc((bbq_allocator))) == NULL) {
+      return NULL;
+    }
   }
 
   // allocate the BBQ struct
