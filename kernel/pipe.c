@@ -7,7 +7,9 @@
 
 
 ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
-    return NULL;
+    // spinlock_acquire(&((struct pipe*) file->info)->pipe_lock); -> CHECK w AARON
+    
+    // spinlock_release(&((struct pipe*) file->info)->pipe_lock);
 }
 
 ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *ofs) {
@@ -15,5 +17,5 @@ ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *o
 }
 
 void pipe_close(struct file *p) {
-
+    fs_close_file(p);
 }

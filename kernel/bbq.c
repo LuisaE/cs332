@@ -23,7 +23,7 @@ bbq_insert(bbq *q, int item) {
 
 // Wait until there is an item and 
 // then remove an item.
-int
+char*
 bbq_remove(bbq *q) {
     int item;
 
