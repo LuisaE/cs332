@@ -8,6 +8,7 @@
 #include <lib/stddef.h>
 #include <lib/string.h>
 #include <arch/asm.h>
+//#include <kernel/pipe.h>
 
 // syscall handlers
 static sysret_t sys_fork(void* arg);
@@ -580,15 +581,16 @@ sys_pipe(void* arg)
     if (!validate_fd(read_fd) || !validate_fd(write_fd)) {
         return ERR_FAULT;
     }
-
+    
     struct proc *p = proc_current();
 
-    // Aaron, how to check if fd available?
-    if ((read_fd = alloc_fd(p->open_files[read_fd])) == ERR_NOMEM ||
-        (write_fd = alloc_fd(p->open_files[write_fd])) == ERR_NOMEM) {
-        // fd not available
+    if (p->open_files[read_fd] || p->open_files[write_fd]) {
+        // fds are not available
         return ERR_NOMEM;
     }
+
+    p->open_files[read_fd] = fs_alloc_file();
+    p->open_files[write_fd] = fs_alloc_file();
 
     if (!p->open_files[read_fd]) {
         // No open read descriptor when proc wants to write
@@ -599,8 +601,11 @@ sys_pipe(void* arg)
         // No open write fd when proc wants to read
     }
 
-    return ERR_OK;
+    //struct pipe *pipe = (struct pipe *) p->open_files[read_fd]->info;
+    //condvar_init(&pipe->wait_cv); // AARON!
+    //spinlock_init(&pipe->lock);
 
+    return ERR_OK;
 }
 
 // void sys_info(struct sys_info *info);
