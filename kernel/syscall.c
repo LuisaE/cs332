@@ -632,8 +632,10 @@ sys_pipe(void* arg)
 
     read_file->f_ops = &pipe_ops;
     read_file->oflag = FS_RDONLY;
+    info->write_end_status = True;
     write_file->f_ops = &pipe_ops;
     write_file->oflag = FS_WRONLY;
+    info->read_end_status = True;
 
     read_file->info = info;
     write_file->info = info;
