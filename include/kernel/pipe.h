@@ -20,10 +20,4 @@ struct pipe {
     struct spinlock pipe_lock;
 };
 
-static struct file_operations pipe_ops = {
-    .read = pipe_read,
-    .write = pipe_write,
-    .close = pipe_close,
-};
-
 #endif /* _PIPE_H_ */

@@ -61,6 +61,10 @@ static bool validate_fd(int fd);
  * Look through process’s open file table to find an available fd, and store the pointer.
  */
 static int alloc_fd(struct file *f);
+/*
+ * Look through process’s open file table to find a file fd
+ */
+//static void dealloc_fd(struct file *f);
 
 
 static sysret_t (*syscalls[])(void*) = {
@@ -130,6 +134,19 @@ static int alloc_fd(struct file *f) {
     
     return ERR_NOMEM;
 }
+
+// static void dealloc_fd(struct file *f) {
+//     struct proc *p;
+//     p = proc_current();
+
+//     for (int i = 0; i < PROC_MAX_ARG; i++) {
+//         if (p->open_files[i]) {
+//             if (p->open_files[i] == f) {
+//                 p->open_files[i] = NULL;
+//             }
+//         }
+//     }
+// }
 
 static bool validate_fd(int fd) {
     // Invalid only if out of bounds
@@ -598,16 +615,28 @@ sys_pipe(void* arg)
     ((int *)fds)[0] = read_fd;
     ((int *)fds)[1] = write_fd;
 
+    // Initialize pipe
     struct pipe *info = kmalloc(sizeof(struct info*));
+    if (!info) {
+        return ERR_NOMEM;
+    }
+
     condvar_init(&info->wait_cv);
     spinlock_init(&info->pipe_lock);
-    info->read_end_status = True;
-    info->write_end_status = True;
+
+    struct file_operations pipe_ops = {
+        .read = pipe_read,
+        .write = pipe_write,
+        .close = pipe_close,
+    };
+
+    read_file->f_ops = &pipe_ops;
+    read_file->oflag = FS_RDONLY;
+    write_file->f_ops = &pipe_ops;
+    write_file->oflag = FS_WRONLY;
 
     read_file->info = info;
     write_file->info = info;
-
-    // Actually do the work
 
     return ERR_OK;
 }
