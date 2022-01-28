@@ -14,7 +14,7 @@ typedef struct {
     struct condvar item_removed;
 
   // State variables
-    char* items[MAX];
+    int items[MAX];
     int front;
     int next_empty;
 } bbq;
@@ -22,5 +22,5 @@ typedef struct {
 bbq* bbq_init();
 void bbq_free(bbq *q);
 void bbq_insert(bbq *q, int item);
-char* bbq_remove(bbq *q);
+int bbq_remove(bbq *q);
 #endif

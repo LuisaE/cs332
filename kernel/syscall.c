@@ -8,7 +8,7 @@
 #include <lib/stddef.h>
 #include <lib/string.h>
 #include <arch/asm.h>
-//#include <kernel/pipe.h>
+#include <kernel/pipe.h>
 
 // syscall handlers
 static sysret_t sys_fork(void* arg);
@@ -575,35 +575,39 @@ sys_pipe(void* arg)
         return ERR_FAULT;
     }
 
-    int read_fd = *((int *) fds); // fds 0
-    int write_fd = *(((int *) fds) + 1); // fds 1
+    struct file *read_file = fs_alloc_file();
+    struct file *write_file = fs_alloc_file();
 
-    if (!validate_fd(read_fd) || !validate_fd(write_fd)) {
-        return ERR_FAULT;
-    }
-    
-    struct proc *p = proc_current();
-
-    if (p->open_files[read_fd] || p->open_files[write_fd]) {
-        // fds are not available
+    if (!read_file || !write_file) {
         return ERR_NOMEM;
     }
 
-    p->open_files[read_fd] = fs_alloc_file();
-    p->open_files[write_fd] = fs_alloc_file();
-
-    if (!p->open_files[read_fd]) {
-        // No open read descriptor when proc wants to write
-        return ERR_END;
+    int read_fd = alloc_fd(read_file);
+    if (read_fd == ERR_NOMEM) {
+        return ERR_NOMEM;
     }
 
-    if (!p->open_files[write_fd]) {
-        // No open write fd when proc wants to read
+    struct proc *p = proc_current();
+
+    int write_fd = alloc_fd(write_file);
+    if (write_fd == ERR_NOMEM) {
+        p->open_files[read_fd] = NULL;
+        return ERR_NOMEM;
     }
 
-    //struct pipe *pipe = (struct pipe *) p->open_files[read_fd]->info;
-    //condvar_init(&pipe->wait_cv); // AARON!
-    //spinlock_init(&pipe->lock);
+    ((int *)fds)[0] = read_fd;
+    ((int *)fds)[1] = write_fd;
+
+    struct pipe *info = kmalloc(sizeof(struct info*));
+    condvar_init(&info->wait_cv);
+    spinlock_init(&info->pipe_lock);
+    info->read_end_status = True;
+    info->write_end_status = True;
+
+    read_file->info = info;
+    write_file->info = info;
+
+    // Actually do the work
 
     return ERR_OK;
 }

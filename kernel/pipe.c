@@ -4,11 +4,12 @@
 #include <kernel/cga.h>
 #include <kernel/uart.h>
 #include <kernel/keyboard.h>
+#include <kernel/pipe.h>
 
 
 ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
     // spinlock_acquire(&((struct pipe*) file->info)->pipe_lock); -> CHECK w AARON
-    
+    return NULL; // for now
     // spinlock_release(&((struct pipe*) file->info)->pipe_lock);
 }
 
