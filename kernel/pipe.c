@@ -5,29 +5,22 @@
 #include <kernel/uart.h>
 #include <kernel/keyboard.h>
 #include <kernel/pipe.h>
+#include <lib/errcode.h>
 
 
 ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
-    spinlock_acquire(&file->info->pipe_lock);
     if (!file->info->write_end_status) {
         return 0;
     }
-    //bbq_remove();
-    // if ((int) count > (int) *ofs) {
-    //     // partial read
-    // }
-    spinlock_release(&file->info->pipe_lock);
-    return NULL; // for now
+    return *bbq_remove(&file->info->bbq);
 }
 
 ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *ofs) {
-    spinlock_acquire(&file->info->pipe_lock);
-    //bbq_insert(q, *buf);
     if (!file->info->read_end_status) {
-        return 0;
+        return ERR_END;
     }
-    spinlock_release(&file->info->pipe_lock);
-    return NULL;
+    bbq_insert(&file->info->bbq, (char*) buf);
+    return NULL; //Aaron
 }
 
 void pipe_close(struct file *p) {
