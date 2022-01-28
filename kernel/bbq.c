@@ -3,8 +3,8 @@
 
 #include <kernel/kmalloc.h>
 #include <kernel/bbq.h>
-#include <stdio.h>
 #include <string.h>
+#include <kernel/console.h>
 
 // static prevents this variable from being visible outside this file
 static struct kmem_cache *bbq_allocator;
@@ -13,16 +13,16 @@ static struct kmem_cache *bbq_allocator;
 // then insert an item.
 void
 bbq_insert(bbq *q, char* item) {
-  //printf("In bbq insert\n");
-    spinlock_acquire(&q->lock);
-    while ((q->next_empty - q->front) == MAX) {
-        condvar_wait(&q->item_removed, &q->lock);
-    }
-    //printf("After wait\n");
-    q->items[q->next_empty % MAX] = *item;
-    q->next_empty += strlen(item);
-    condvar_signal(&q->item_added);
-    spinlock_release(&q->lock);
+  // kprintf("In bbq insert\n");
+  spinlock_acquire(&q->lock);
+  while ((q->next_empty - q->front) == MAX) {
+      condvar_wait(&q->item_removed, &q->lock);
+  }
+  //printf("After wait\n");
+  q->items[q->next_empty % MAX] = *item;
+  q->next_empty += strlen(item);
+  condvar_signal(&q->item_added);
+  spinlock_release(&q->lock);
 }
 
 // Wait until there is an item and 
