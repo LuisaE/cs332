@@ -11,7 +11,6 @@
 #include <lib/errcode.h>
 #include <lib/stddef.h>
 #include <lib/string.h>
-#include <kernel/pipe.h>
 
 List ptable; // process table
 struct spinlock ptable_lock;

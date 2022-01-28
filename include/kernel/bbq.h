@@ -7,7 +7,7 @@
 
 #define MAX 512
 
-typedef struct {
+struct bbq {
   // Synchronization variables
     struct spinlock lock;
     struct condvar item_added;
@@ -17,10 +17,10 @@ typedef struct {
     char items[MAX];
     int front;
     int next_empty;
-} bbq;
+};
 
-bbq* bbq_init();
-void bbq_free(bbq *q);
-void bbq_insert(bbq *q, char* item);
-char* bbq_remove(bbq *q);
+struct bbq* bbq_init();
+void bbq_free(struct bbq *q);
+void bbq_insert(struct bbq *q, char* item);
+char* bbq_remove(struct bbq *q);
 #endif
