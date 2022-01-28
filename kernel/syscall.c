@@ -624,18 +624,19 @@ sys_pipe(void* arg)
     condvar_init(&info->wait_cv);
     spinlock_init(&info->pipe_lock);
 
-    struct file_operations pipe_ops = {
+    static struct file_operations pipe_ops = {
         .read = pipe_read,
         .write = pipe_write,
-        .close = pipe_close,
+        .close = pipe_close
     };
 
     read_file->f_ops = &pipe_ops;
     read_file->oflag = FS_RDONLY;
-    info->write_end_status = True;
+    info->read_end_status = True;
+
     write_file->f_ops = &pipe_ops;
     write_file->oflag = FS_WRONLY;
-    info->read_end_status = True;
+    info->write_end_status = True;
 
     read_file->info = info;
     write_file->info = info;

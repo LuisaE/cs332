@@ -337,12 +337,7 @@ proc_exit(int status)
     spinlock_acquire(&ptable_lock);
     for (int i = 0; i < PROC_MAX_ARG; i++) {
         if (p->open_files[i]) {
-            if (p->open_files[i]->info) {
-                // it is a pipe
-                pipe_close(p->open_files[i]);
-            } else {
-                fs_close_file(p->open_files[i]);
-            }
+            fs_close_file(p->open_files[i]);
         }
     }
 
