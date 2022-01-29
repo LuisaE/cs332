@@ -1,5 +1,6 @@
 #include <lib/test.h>
 #include <lib/string.h>
+#include <string.h>
 
 int
 main()
@@ -24,9 +25,11 @@ main()
     if ((read(fds[0], buf, 1)) != 1) {
         error("pipe-basic: failed to read byte written to pipe, return value was %d", ret);
     }
+    printf("Check buf %s \n", buf);
     buf[1] = 0; // add null terminator
     printf("3rd check\n");
     // check that correct byte was read
+    // printf("Check buf %d size \n", strlen((char*) buf));
     if (strcmp(buf, "!") != 0) {
         error("pipe-basic: failed to read correct byte from pipe, read %s", buf);
     }

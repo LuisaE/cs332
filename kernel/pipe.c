@@ -6,22 +6,28 @@
 #include <kernel/keyboard.h>
 #include <kernel/pipe.h>
 #include <lib/errcode.h>
+#include <string.h>
 
 static ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
     if (!file->info->write_end_status) {
         return 0;
     }
-    return *bbq_remove(&file->info->bbq);
+    char *ret = bbq_remove(&file->info->bbq);
+    kprintf("Check ret in pipe_read %s \n", ret);
+    // strcpy(, (char*) buf);
+    // kprintf("Check buf in pipe_read %s \n", (char*) buf);
+    return strlen((char*) buf);
 }
 
 static ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *ofs) {
-    kprintf("Write\n");
+    // kprintf("Write\n");
     if (!file->info->read_end_status) {
         return ERR_END;
     }
-    kprintf("Call bbq\n");
+    // kprintf("Call bbq\n");
     bbq_insert(&file->info->bbq, (char*) buf);
-    return NULL; //Aaron
+    // kprintf("Check buf and count %s %d \n", (char*) buf, count);
+    return strlen(buf); //Aaron
 }
 
 static void pipe_close(struct file *p) {

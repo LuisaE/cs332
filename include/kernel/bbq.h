@@ -5,7 +5,7 @@
 #define _BBQ_H_
 #include <kernel/synch.h>
 
-#define MAX 512
+#define MAX_SIZE 512
 
 struct bbq {
   // Synchronization variables
@@ -14,7 +14,7 @@ struct bbq {
     struct condvar item_removed;
 
   // State variables
-    char items[MAX];
+    char items[MAX_SIZE];
     int front;
     int next_empty;
 };
