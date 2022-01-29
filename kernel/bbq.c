@@ -13,12 +13,12 @@ static struct kmem_cache *bbq_allocator;
 // then insert an item.
 void
 bbq_insert(struct bbq *q, char* item) {
-  // kprintf("In bbq insert\n");
+  kprintf("In bbq insert\n");
   spinlock_acquire(&q->lock);
   while ((q->next_empty - q->front) == MAX) {
       condvar_wait(&q->item_removed, &q->lock);
   }
-  //printf("After wait\n");
+  kprintf("After wait\n");
   q->items[q->next_empty % MAX] = *item;
   q->next_empty += strlen(item);
   condvar_signal(&q->item_added);
@@ -48,12 +48,10 @@ struct bbq* bbq_init() {
 
   // if the allocator has not been created yet, do so now
   if (bbq_allocator == NULL) {
-    // Check with Aaron: error. Was sizeof(BBQ)
-    if ((bbq_allocator = kmem_cache_alloc((bbq_allocator))) == NULL) {
+    if ((bbq_allocator = kmem_cache_create(sizeof(struct bbq))) == NULL) {
       return NULL;
     }
   }
-
   // allocate the BBQ struct
   if ((q = kmem_cache_alloc(bbq_allocator)) == NULL) {
     return NULL;
