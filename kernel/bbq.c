@@ -13,19 +13,14 @@ static struct kmem_cache *bbq_allocator;
 // then insert an item.
 void
 bbq_insert(struct bbq *q, char* item) {
-  // kprintf("In bbq insert %s \n", item);
   spinlock_acquire(&q->lock);
   while ((q->next_empty - q->front) == MAX_SIZE) {
       condvar_wait(&q->item_removed, &q->lock);
   }
-  kprintf("After wait\n");
-  // q->items[q->next_empty % MAX] = strcpy;
   strcpy(&q->items[q->next_empty % MAX_SIZE], item);
-  // kprintf("Check string copied %s \n", &q->items[q->next_empty % MAX_SIZE]);
   q->next_empty += strlen(item);
   condvar_signal(&q->item_added);
   spinlock_release(&q->lock);
-  kprintf("end of insert \n");
 }
 
 // Wait until there is an item and 
@@ -36,10 +31,8 @@ bbq_remove(struct bbq *q) {
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
     }
-    // char* item = &q->items[q->front % MAX];
     char* item = kmalloc(sizeof(q->items[q->front % MAX_SIZE]) + 1);
     strcpy(item, &q->items[q->front % MAX_SIZE]);
-    kprintf("Check removed string %s \n", item);
     q->front += strlen(item);
     condvar_signal(&q->item_removed);
     spinlock_release(&q->lock);
@@ -65,7 +58,6 @@ struct bbq* bbq_init() {
 
   q->front = 0;
   q->next_empty = 0;
-  // &q->items = kmalloc(sizeof(MAX_SIZE));
   q->items[0] = '\0';
   spinlock_init(&q->lock);
   condvar_init(&q->item_added);
@@ -75,5 +67,7 @@ struct bbq* bbq_init() {
 }
 
 void bbq_free(struct bbq *q) {
+  kprintf("In bbq free\n");
   kmem_cache_free(bbq_allocator, q);
+  kprintf("In bbq free 2\n");
 }
