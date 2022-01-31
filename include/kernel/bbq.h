@@ -9,18 +9,19 @@
 
 struct bbq {
   // Synchronization variables
-    struct spinlock lock;
-    struct condvar item_added;
-    struct condvar item_removed;
+  struct spinlock lock;
+  struct condvar item_added;
+  struct condvar item_removed;
 
   // State variables
-    char items[MAX_SIZE];
-    int front;
-    int next_empty;
+  char items[MAX_SIZE];
+  int front;
+  int next_empty;
 };
 
 struct bbq* bbq_init();
 void bbq_free(struct bbq *q);
-void bbq_insert(struct bbq *q, char* item);
-char* bbq_remove(struct bbq *q);
+void bbq_insert(struct bbq *q, char* item, int count);
+char* bbq_remove(struct bbq *q, int count);
+
 #endif

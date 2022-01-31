@@ -12,7 +12,7 @@ static struct kmem_cache *bbq_allocator;
 // Wait until there is room and
 // then insert an item.
 void
-bbq_insert(struct bbq *q, char* item) {
+bbq_insert(struct bbq *q, char* item, int count) {
   spinlock_acquire(&q->lock);
   while ((q->next_empty - q->front) == MAX_SIZE) {
       condvar_wait(&q->item_removed, &q->lock);
@@ -26,7 +26,7 @@ bbq_insert(struct bbq *q, char* item) {
 // Wait until there is an item and 
 // then remove an item.
 char*
-bbq_remove(struct bbq *q) {
+bbq_remove(struct bbq *q, int count) {
     spinlock_acquire(&q->lock);
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
@@ -58,7 +58,7 @@ struct bbq* bbq_init() {
 
   q->front = 0;
   q->next_empty = 0;
-  q->items[0] = '\0';
+  //q->items[0] = '\0';
   spinlock_init(&q->lock);
   condvar_init(&q->item_added);
   condvar_init(&q->item_removed);
@@ -67,7 +67,5 @@ struct bbq* bbq_init() {
 }
 
 void bbq_free(struct bbq *q) {
-  kprintf("In bbq free\n");
   kmem_cache_free(bbq_allocator, q);
-  kprintf("In bbq free 2\n");
 }
