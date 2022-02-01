@@ -17,8 +17,12 @@ bbq_insert(struct bbq *q, char* item, int count) {
   while ((q->next_empty - q->front) == MAX_SIZE) {
       condvar_wait(&q->item_removed, &q->lock);
   }
-  strcpy(&q->items[q->next_empty % MAX_SIZE], item);
-  q->next_empty += strlen(item);
+  //strcpy(&q->items[q->next_empty % MAX_SIZE], item);
+  for (int i = 0; i < count; i++) {
+      q->items[(q->front + i) % MAX_SIZE] = item[i];
+      kprintf("Buf[%d] = %x\n", i, q->items[(q->front + i) % MAX_SIZE]);
+  }
+  q->next_empty += count;
   condvar_signal(&q->item_added);
   spinlock_release(&q->lock);
 }
@@ -31,9 +35,12 @@ bbq_remove(struct bbq *q, int count) {
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
     }
-    char* item = kmalloc(sizeof(q->items[q->front % MAX_SIZE]) + 1);
-    strcpy(item, &q->items[q->front % MAX_SIZE]);
-    q->front += strlen(item);
+    char* item = kmalloc(count + 1);
+    for (int i = 0; i < count; i++) {
+      item[i] = q->items[(q->front + i) % MAX_SIZE];
+    }
+    //strcpy(item, &q->items[q->front % MAX_SIZE]);
+    q->front += count;
     condvar_signal(&q->item_removed);
     spinlock_release(&q->lock);
     return item;
@@ -58,7 +65,9 @@ struct bbq* bbq_init() {
 
   q->front = 0;
   q->next_empty = 0;
-  //q->items[0] = '\0';
+  // for (int i = 0; i< MAX_SIZE; i++){
+  //   q->items[i] = 0;
+  // }
   spinlock_init(&q->lock);
   condvar_init(&q->item_added);
   condvar_init(&q->item_removed);

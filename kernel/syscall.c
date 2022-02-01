@@ -583,6 +583,7 @@ sys_pipe(void* arg)
 
     int read_fd = alloc_fd(read_file);
     if (read_fd == ERR_NOMEM) {
+        //fs free file
         return ERR_NOMEM;
     }
 

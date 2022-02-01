@@ -1,4 +1,5 @@
 #include <lib/test.h>
+#include <string.h>
 
 int
 main()
@@ -12,13 +13,10 @@ main()
         error("pipe-test: pipe() failed, return value was %d", ret);
     }
 
-    printf("Pipe test 1\n");
-
     // fork, children writes to pipe, parent reads
     seq = 0;
     if ((pid = fork()) == 0) {
         // children close read pipe
-        printf("Pipe test 2\n");
         if ((ret = close(fds[0])) != ERR_OK) {
             error("pipe-test: failed to close read pipe, return value was %d", ret);
         }
@@ -28,24 +26,24 @@ main()
             for (i = 0; i < 95; i++) {
                 buf[i] = seq++;
             }
-            printf("Pipe test 3\n");
             // write buffer to write end of pipe
             if ((ret = write(fds[1], buf, 95)) != 95) {
+                printf("ret %d\n", ret);
                 error("pipe-test: failed to write all buffer content, return value was %d", ret);
             }
         }
         exit(getpid());
     } else if (pid > 0) {
         // parent close its write pipe
-        printf("Pipe test 4\n");
         if ((ret = close(fds[1])) != ERR_OK) {
             error("pipe-test: failed to close write pipe, return value was %d", ret);
         }
         total = 0;
         cc = 1;
         while ((n = read(fds[0], buf, cc)) > 0) {
+            printf("Pipe-test: External while loop\n");
             for (i = 0; i < n; i++) {
-                printf("Pipe test 5\n");
+                printf("Pipe-test: Internal for loop\n");
                 if ((buf[i] & 0xff) != (seq++ & 0xff)) {
                     error("pipe-test: read wrong values from pipe\n");
                 }
