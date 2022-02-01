@@ -19,8 +19,8 @@ bbq_insert(struct bbq *q, char* item, int count) {
   }
   //strcpy(&q->items[q->next_empty % MAX_SIZE], item);
   for (int i = 0; i < count; i++) {
-      q->items[(q->front + i) % MAX_SIZE] = item[i];
-      kprintf("Buf[%d] = %x\n", i, q->items[(q->front + i) % MAX_SIZE]);
+      q->items[(q->next_empty + i) % MAX_SIZE] = item[i];
+      // kprintf("Buf[%d] = %x\n", i, q->items[(q->front + i) % MAX_SIZE]);
   }
   q->next_empty += count;
   condvar_signal(&q->item_added);
@@ -77,4 +77,12 @@ struct bbq* bbq_init() {
 
 void bbq_free(struct bbq *q) {
   kmem_cache_free(bbq_allocator, q);
+}
+
+void print_string(void* buf) {
+  kprintf("start string: ");
+  for (int i = 0; i < sizeof(buf); i++) {
+    kprintf("%x ", ((char*) buf)[i]);
+  }
+  kprintf("\n");
 }

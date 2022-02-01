@@ -1,6 +1,14 @@
 #include <lib/test.h>
 #include <string.h>
 
+void print_string(void* buf) {
+  printf("start string: ");
+  for (int i = 0; i < sizeof(buf); i++) {
+    printf("%x ", ((char*) buf)[i]);
+  }
+  printf("\n");
+}
+
 int
 main()
 {
@@ -40,10 +48,14 @@ main()
         }
         total = 0;
         cc = 1;
+        print_string(buf);
+        printf("Check buf\n");
         while ((n = read(fds[0], buf, cc)) > 0) {
-            printf("Pipe-test: External while loop\n");
+            printf("Check n %d \n", n);
+            print_string(buf);
+            // printf("Pipe-test: External while loop\n");
             for (i = 0; i < n; i++) {
-                printf("Pipe-test: Internal for loop\n");
+                // printf("Pipe-test: Internal for loop\n");
                 if ((buf[i] & 0xff) != (seq++ & 0xff)) {
                     error("pipe-test: read wrong values from pipe\n");
                 }
@@ -51,6 +63,7 @@ main()
             total += n;
             cc = cc * 2 > sizeof(buf) ? sizeof(buf) : cc * 2;
         }
+
         printf("Pipe test 6\n");
         if (total != 5 * 95) {
             error("pipe-test: failed to read all bytes from pipe, read %d bytes", total);
