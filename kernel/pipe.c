@@ -11,9 +11,9 @@
 static ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
     if (!file->info->write_end_status) {
         kprintf("Why here read?\n");
-        return 0;
+        return bbq_remove(file->info->bbq, (int) count, (char *) buf, True);
     }
-    return bbq_remove(file->info->bbq, (int) count, (char *) buf);
+    return bbq_remove(file->info->bbq, (int) count, (char *) buf, False);
 }
 
 static ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *ofs) {

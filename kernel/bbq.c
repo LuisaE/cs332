@@ -34,16 +34,20 @@ bbq_insert(struct bbq *q, char* item, int count) {
 // then remove an item.
 // Read
 int
-bbq_remove(struct bbq *q, int count, char* item) {
+bbq_remove(struct bbq *q, int count, char* item, bool remainig_buf) {
     spinlock_acquire(&q->lock);
+    int i = 0;
+    if (remainig_buf) {
+      while (q->items[q->front] && q->front != q->next_empty) {
+        item[i++] = q->items[q->front++];
+        q->front = q->front % MAX_SIZE;
+      }
+      spinlock_release(&q->lock);
+      return i;
+    }
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
     }
-    //char* item = kmalloc(count + 1);
-    // for (int i = 0; i < count; i++) {
-    //   item[i] = q->items[(q->front + i) % MAX_SIZE];
-    // }
-    int i = 0;
     // i < count?
     while (q->front != q->next_empty) {
       item[i++] = q->items[q->front++];
