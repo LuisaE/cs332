@@ -36,7 +36,6 @@ main()
             }
             // write buffer to write end of pipe
             if ((ret = write(fds[1], buf, 95)) != 95) {
-                printf("ret %d\n", ret);
                 error("pipe-test: failed to write all buffer content, return value was %d", ret);
             }
         }
@@ -48,14 +47,9 @@ main()
         }
         total = 0;
         cc = 1;
-        print_string(buf);
-        printf("Check buf\n");
+
         while ((n = read(fds[0], buf, cc)) > 0) {
-            printf("Check n %d \n", n);
-            print_string(buf);
-            // printf("Pipe-test: External while loop\n");
             for (i = 0; i < n; i++) {
-                // printf("Pipe-test: Internal for loop\n");
                 if ((buf[i] & 0xff) != (seq++ & 0xff)) {
                     error("pipe-test: read wrong values from pipe\n");
                 }
@@ -64,20 +58,18 @@ main()
             cc = cc * 2 > sizeof(buf) ? sizeof(buf) : cc * 2;
         }
 
-        printf("Pipe test 6\n");
         if (total != 5 * 95) {
             error("pipe-test: failed to read all bytes from pipe, read %d bytes", total);
         }
-        printf("Pipe test 7\n");
+
         if ((ret = close(fds[0])) != ERR_OK) {
             error("pipe-test: failed to close read pipe, return value was %d", ret);
         }
-        printf("Pipe test 8\n");
+
         if ((ret = wait(-1, &status)) < 0 || status != pid) {
             error("pipe-test: failed to wait for child or child exit status wrong, return value was %d", ret);
         }
     } else {
-        printf("Pipe test 9\n");
         error("pipe-test: fork() failed %d", pid);
     }
     pass("pipe-test");
