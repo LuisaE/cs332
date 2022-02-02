@@ -80,9 +80,16 @@ void bbq_free(struct bbq *q) {
 }
 
 void print_string(void* buf) {
-  kprintf("start string: ");
+  kprintf("Start buf: ");
   for (int i = 0; i < sizeof(buf); i++) {
     kprintf("%x ", ((char*) buf)[i]);
   }
   kprintf("\n");
+}
+
+void bbq_print(struct bbq *q) {
+  kprintf("Printing BBQ states: \n");
+  kprintf("Front: %d \n", q->front);
+  kprintf("Next empty: %d \n", q->next_empty);
+  print_string((char*) q->items);
 }
