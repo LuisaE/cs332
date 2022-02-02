@@ -11,39 +11,47 @@ static struct kmem_cache *bbq_allocator;
 
 // Wait until there is room and
 // then insert an item.
+// Write
 void
 bbq_insert(struct bbq *q, char* item, int count) {
   spinlock_acquire(&q->lock);
   while ((q->next_empty - q->front) == MAX_SIZE) {
       condvar_wait(&q->item_removed, &q->lock);
   }
-  //strcpy(&q->items[q->next_empty % MAX_SIZE], item);
+
   for (int i = 0; i < count; i++) {
-      q->items[(q->next_empty + i) % MAX_SIZE] = item[i];
-      // kprintf("Buf[%d] = %x\n", i, q->items[(q->front + i) % MAX_SIZE]);
+      q->items[q->next_empty++] = item[i];
+      q->next_empty = q->next_empty % MAX_SIZE;
+      if (q->front == q->next_empty) {
+        break;
+      }
   }
-  q->next_empty += count;
   condvar_signal(&q->item_added);
   spinlock_release(&q->lock);
 }
 
 // Wait until there is an item and 
 // then remove an item.
-char*
-bbq_remove(struct bbq *q, int count) {
+// Read
+int
+bbq_remove(struct bbq *q, int count, char* item) {
     spinlock_acquire(&q->lock);
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
     }
-    char* item = kmalloc(count + 1);
-    for (int i = 0; i < count; i++) {
-      item[i] = q->items[(q->front + i) % MAX_SIZE];
+    //char* item = kmalloc(count + 1);
+    // for (int i = 0; i < count; i++) {
+    //   item[i] = q->items[(q->front + i) % MAX_SIZE];
+    // }
+    int i = 0;
+    // i < count?
+    while (q->front != q->next_empty) {
+      item[i++] = q->items[q->front++];
+      q->front = q->front % MAX_SIZE;
     }
-    //strcpy(item, &q->items[q->front % MAX_SIZE]);
-    q->front += count;
     condvar_signal(&q->item_removed);
     spinlock_release(&q->lock);
-    return item;
+    return i;
 }
 
 // Initialize the queue to empty,
@@ -65,9 +73,6 @@ struct bbq* bbq_init() {
 
   q->front = 0;
   q->next_empty = 0;
-  // for (int i = 0; i< MAX_SIZE; i++){
-  //   q->items[i] = 0;
-  // }
   spinlock_init(&q->lock);
   condvar_init(&q->item_added);
   condvar_init(&q->item_removed);

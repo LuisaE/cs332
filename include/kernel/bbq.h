@@ -22,7 +22,7 @@ struct bbq {
 struct bbq* bbq_init();
 void bbq_free(struct bbq *q);
 void bbq_insert(struct bbq *q, char* item, int count);
-char* bbq_remove(struct bbq *q, int count);
+int bbq_remove(struct bbq *q, int count, char *item);
 void print_string(void* buf);
 
 #endif

@@ -10,30 +10,18 @@
 
 static ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
     if (!file->info->write_end_status) {
-        kprintf("Why here?\n");
+        kprintf("Why here read?\n");
         return 0;
     }
-    char *ret = bbq_remove(file->info->bbq, (int) count);
-    spinlock_acquire(&file->info->pipe_lock);
-    //strcpy((char*) buf, ret);
-    kprintf("Pipe read:\n");
-    for (int i = 0; i < count; i++) {
-        ((char*)buf)[i] = ret[i];
-        kprintf("Buf[%d] = %x\n", i, ((char *)buf)[i]);
-    }
-    spinlock_release(&file->info->pipe_lock);
-    kfree(ret);
-    return count;
+    return bbq_remove(file->info->bbq, (int) count, (char *) buf);
 }
 
 static ssize_t pipe_write(struct file *file, const void *buf, size_t count, offset_t *ofs) {
     spinlock_acquire(&file->info->pipe_lock);
     if (!file->info->read_end_status) {
         spinlock_release(&file->info->pipe_lock);
-        kprintf("Why here?\n");
         return ERR_END;
     }
-    //kprintf("Pipe write:\n");
     spinlock_release(&file->info->pipe_lock);
     bbq_insert(file->info->bbq, (char*) buf, (int) count);
     return count;
