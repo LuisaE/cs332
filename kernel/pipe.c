@@ -13,8 +13,12 @@ static ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *o
     if (!file->info->write_end_status) {
         spinlock_release(&file->info->pipe_lock);
         // return remaining bytes in buf or 0 if otherwise
+        kprintf("In read close end \n");
+        bbq_print(file->info->bbq);
         return bbq_remove(file->info->bbq, (int) count, (char *) buf, True);
     }
+    kprintf("In read \n");
+    bbq_print(file->info->bbq);
     spinlock_release(&file->info->pipe_lock);
     return bbq_remove(file->info->bbq, (int) count, (char *) buf, False);
 }
@@ -27,6 +31,8 @@ static ssize_t pipe_write(struct file *file, const void *buf, size_t count, offs
     }
     spinlock_release(&file->info->pipe_lock);
     // write
+    kprintf("In write \n");
+    bbq_print(file->info->bbq);
     bbq_insert(file->info->bbq, (char*) buf, (int) count);
     return count;
 }

@@ -96,7 +96,7 @@ void bbq_free(struct bbq *q) {
 
 void print_string(void* buf) {
   kprintf("Start buf: ");
-  for (int i = 0; i < sizeof(buf); i++) {
+  for (int i = 0; i < 100; i++) {
     kprintf("%x ", ((char*) buf)[i]);
   }
   kprintf("\n");
