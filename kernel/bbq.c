@@ -9,12 +9,12 @@
 // static prevents this variable from being visible outside this file
 static struct kmem_cache *bbq_allocator;
 
-// Wait until there is room and
-// then insert an item.
-// Write
+// Write to our pipe struct
 void
 bbq_insert(struct bbq *q, char* item, int count) {
   spinlock_acquire(&q->lock);
+
+  // block until there's room
   while ((q->next_empty - q->front) == MAX_SIZE) {
       condvar_wait(&q->item_removed, &q->lock);
   }
@@ -23,6 +23,7 @@ bbq_insert(struct bbq *q, char* item, int count) {
       q->items[q->next_empty++] = item[i];
       q->next_empty = q->next_empty % MAX_SIZE;
       if (q->front == q->next_empty) {
+        // done writing
         break;
       }
   }
@@ -36,23 +37,28 @@ bbq_insert(struct bbq *q, char* item, int count) {
 int
 bbq_remove(struct bbq *q, int count, char* item, bool remainig_buf) {
     spinlock_acquire(&q->lock);
+
     int i = 0;
     if (remainig_buf) {
-      while (q->items[q->front] && q->front != q->next_empty) {
+      // write to buf the bytes left to read
+      while (q->front < q->next_empty) {
         item[i++] = q->items[q->front++];
         q->front = q->front % MAX_SIZE;
       }
       spinlock_release(&q->lock);
       return i;
     }
+
+    // block until there's something to read
     while (q->front == q->next_empty) {
         condvar_wait(&q->item_added, &q->lock);
     }
-    // i < count?
+
     while (q->front != q->next_empty) {
       item[i++] = q->items[q->front++];
       q->front = q->front % MAX_SIZE;
     }
+
     condvar_signal(&q->item_removed);
     spinlock_release(&q->lock);
     return i;

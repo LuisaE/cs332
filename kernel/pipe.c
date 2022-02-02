@@ -9,10 +9,13 @@
 #include <string.h>
 
 static ssize_t pipe_read(struct file *file, void *buf, size_t count, offset_t *ofs) {
+    spinlock_acquire(&file->info->pipe_lock);
     if (!file->info->write_end_status) {
-        kprintf("Why here read?\n");
+        spinlock_release(&file->info->pipe_lock);
+        // return remaining bytes in buf or 0 if otherwise
         return bbq_remove(file->info->bbq, (int) count, (char *) buf, True);
     }
+    spinlock_release(&file->info->pipe_lock);
     return bbq_remove(file->info->bbq, (int) count, (char *) buf, False);
 }
 
@@ -23,6 +26,7 @@ static ssize_t pipe_write(struct file *file, const void *buf, size_t count, offs
         return ERR_END;
     }
     spinlock_release(&file->info->pipe_lock);
+    // write
     bbq_insert(file->info->bbq, (char*) buf, (int) count);
     return count;
 }
@@ -60,6 +64,7 @@ err_t pipe_init(struct file *read_file, struct file *write_file) {
         .close = pipe_close
     };
 
+    // set file metadata
     spinlock_acquire(&info->pipe_lock);
     read_file->f_ops = &pipe_ops;
     read_file->oflag = FS_RDONLY;
@@ -70,6 +75,7 @@ err_t pipe_init(struct file *read_file, struct file *write_file) {
     info->write_end_status = True;
     spinlock_release(&info->pipe_lock);
 
+    // point file info to the pipe struct
     read_file->info = info;
     write_file->info = info;
 
