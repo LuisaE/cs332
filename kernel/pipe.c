@@ -39,12 +39,14 @@ static void pipe_close(struct file *p) {
         // close write
         p->info->write_end_status = False;
     }
-    spinlock_release(&p->info->pipe_lock);
     if (!p->info->read_end_status && !p->info->write_end_status) {
         // free pipe struct and bbq
         bbq_free(p->info->bbq);
+        spinlock_release(&p->info->pipe_lock);
         kfree(p->info);
+        return;
     }
+    spinlock_release(&p->info->pipe_lock);
 }
 
 err_t pipe_init(struct file *read_file, struct file *write_file) {
@@ -56,6 +58,7 @@ err_t pipe_init(struct file *read_file, struct file *write_file) {
 
     spinlock_init(&info->pipe_lock);
     info->bbq = kmalloc(sizeof(struct bbq));
+    spinlock_acquire(&info->pipe_lock);
     info->bbq = bbq_init();
 
     static struct file_operations pipe_ops = {
@@ -65,7 +68,6 @@ err_t pipe_init(struct file *read_file, struct file *write_file) {
     };
 
     // set file metadata
-    spinlock_acquire(&info->pipe_lock);
     read_file->f_ops = &pipe_ops;
     read_file->oflag = FS_RDONLY;
     info->read_end_status = True;

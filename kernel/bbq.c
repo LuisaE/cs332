@@ -41,7 +41,7 @@ bbq_remove(struct bbq *q, int count, char* item, bool remainig_buf) {
     int i = 0;
     if (remainig_buf) {
       // write to buf the bytes left to read
-      while (q->front < q->next_empty) {
+      while (q->front != q->next_empty && i < count) {
         item[i++] = q->items[q->front++];
         q->front = q->front % MAX_SIZE;
       }
@@ -54,7 +54,7 @@ bbq_remove(struct bbq *q, int count, char* item, bool remainig_buf) {
         condvar_wait(&q->item_added, &q->lock);
     }
 
-    while (q->front != q->next_empty) {
+    while (q->front != q->next_empty && i < count) {
       item[i++] = q->items[q->front++];
       q->front = q->front % MAX_SIZE;
     }
