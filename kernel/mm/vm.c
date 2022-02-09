@@ -255,6 +255,9 @@ found:
 err_t
 memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
 {
+    *old_bound = region->end;
+    region->end = old_bound + size; // Aaron?
+    // region->start = ;
     return ERR_OK;
 }
 

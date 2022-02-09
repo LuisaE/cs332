@@ -524,7 +524,16 @@ sys_fstat(void *arg)
 static sysret_t
 sys_sbrk(void *arg)
 {
-    panic("syscall sbrk not implemented");
+    sysarg_t increment;
+
+    kassert(fetch_arg(arg, 1, &increment));
+
+    struct proc *p = proc_current();
+
+    vaddr_t old_bound;
+    memregion_extend(p->as.heap, increment, &old_bound);
+
+    return old_bound;
 }
 
 // void memifo();
