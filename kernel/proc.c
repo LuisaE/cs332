@@ -468,7 +468,7 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     err_t err;
     paddr_t paddr;
     vaddr_t stackptr;
-    vaddr_t stacktop = USTACK_UPPERBOUND-pg_size; //AARON, no
+    vaddr_t stacktop = USTACK_UPPERBOUND-pg_size; 
 
     // allocate a page of physical memory for stack
     if ((err = pmem_alloc(&paddr)) != ERR_OK) {
@@ -479,12 +479,12 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     // create memregion for stack
     // no stacktop, start with UB
     // CHANGE THIS, NO STACKTOP - 4 lines?
-    if (as_map_memregion(&p->as, stacktop, pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
+    if (as_map_memregion(&p->as, stacktop, USTACK_PAGES*pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
         err = ERR_NOMEM;
         goto error;
     }
     // map in first stack page
-    if ((err = vpmap_map(p->as.vpmap, stacktop, paddr, 1, MEMPERM_URW)) != ERR_OK) {
+    if ((err = vpmap_map(p->as.vpmap, stacktop, paddr, USTACK_PAGES, MEMPERM_URW)) != ERR_OK) {
         goto error;
     }
     // kernel virtual address of the user stack, points to top of the stack
