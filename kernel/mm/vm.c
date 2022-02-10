@@ -256,8 +256,17 @@ err_t
 memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
 {
     *old_bound = region->end;
-    region->end += size; // Aaron?
-    // region->start = ;
+    region->end += size; 
+    if (region->end < region->start) {
+        return ERR_VM_INVALID;
+    }
+    for (Node *n = list_begin(&region->as->regions); n != list_end(&region->as->regions);) {
+        struct memregion *cur_region = (struct memregion*) list_entry(n, struct memregion, as_node);
+        if (region->end > cur_region->start) {
+            return ERR_VM_BOUND;
+        }
+        n = list_next(n);
+    }
     return ERR_OK;
 }
 
