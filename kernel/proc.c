@@ -477,14 +477,12 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     memset((void*) kmap_p2v(paddr), 0, pg_size);
     
     // create memregion for stack
-    // no stacktop, start with UB
-    // CHANGE THIS, NO STACKTOP - 4 lines?
-    if (as_map_memregion(&p->as, stacktop, USTACK_PAGES*pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
+    if (as_map_memregion(&p->as, USTACK_UPPERBOUND-USTACK_PAGES*pg_size, USTACK_PAGES*pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
         err = ERR_NOMEM;
         goto error;
     }
     // map in first stack page
-    if ((err = vpmap_map(p->as.vpmap, stacktop, paddr, USTACK_PAGES, MEMPERM_URW)) != ERR_OK) {
+    if ((err = vpmap_map(p->as.vpmap, stacktop, paddr, 1, MEMPERM_URW)) != ERR_OK) {
         goto error;
     }
     // kernel virtual address of the user stack, points to top of the stack
