@@ -19,6 +19,7 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
     }
 
     // list stack
+    // as_map_findmemregion -> give address and return 
     struct proc *p = proc_current();
     if (write && (p->as.heap->perm == MEMPERM_R || p->as.heap->perm == MEMPERM_UR)) {
         return;
