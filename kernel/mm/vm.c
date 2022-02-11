@@ -255,15 +255,22 @@ found:
 err_t
 memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
 {
-    *old_bound = region->end;
-    region->end += size; 
-    if (region->end < region->start) {
+    int old_mem_bound = region->end;
+    int new_bound = region->end + size; 
+    if (new_bound < region->start) {
         return ERR_VM_INVALID;
     }
+
+    *old_bound = region->end;
+    region->end = new_bound;
+
+    // overlapping regions:
     for (Node *n = list_begin(&region->as->regions); n != list_end(&region->as->regions); n = list_next(n)) {
         struct memregion *cur_region = (struct memregion*) list_entry(n, struct memregion, as_node);
-        if (region->end > cur_region->start) {
-            return ERR_VM_BOUND;
+        if (cur_region->start > old_mem_bound) {
+            if (region->end > cur_region->start && region->start < cur_region->end) {
+                return ERR_VM_BOUND;
+            }
         }
     }
     return ERR_OK;

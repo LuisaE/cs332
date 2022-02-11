@@ -9,6 +9,7 @@ main()
     size_t amt;
 
     // try growing heap by 256 pages
+    printf("1st\n");
     a = sbrk(0);
     amt = 256 * 4096;
     if ((p = sbrk(amt)) != a) {
@@ -16,11 +17,14 @@ main()
     }
     lastaddr = (char *)(a + amt - 1);
     *lastaddr = 99;
+    printf("2\n");
 
     // fork a child and make sure heap is inherited/copied over
     if ((pid = fork()) < 0) {
         error("sbrk test fork failed, return value was %d", pid);
     }
+        printf("3\n");
+
     // child grow heap by two pages and exit
     if (pid == 0) {
         b = sbrk(4096);
@@ -30,6 +34,8 @@ main()
         }
         exit(0);
     }
+        printf("4st\n");
+
     // parent waits
     if ((ret = wait(pid, NULL)) != pid) {
         error("sbrk test wait failed, return value was %d", ret);
