@@ -531,8 +531,14 @@ sys_sbrk(void *arg)
     struct proc *p = proc_current();
 
     vaddr_t old_bound;
-    memregion_extend(p->as.heap, increment, &old_bound);
 
+    err_t extend_status = memregion_extend(p->as.heap, increment, &old_bound);
+    kprintf("sbrk %d\n", __LINE__);
+    if (extend_status != ERR_OK) {
+        return ERR_NOMEM;
+    }
+    kprintf("old bound: %x\n", old_bound);
+    kprintf("sbrk %d\n", __LINE__);
     return old_bound;
 }
 

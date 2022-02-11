@@ -12,12 +12,13 @@ main()
     printf("1st\n");
     a = sbrk(0);
     amt = 256 * 4096;
+    printf("2\n");
     if ((p = sbrk(amt)) != a) {
         error("sbrk test failed to grow big address space or did not return old bound, return value was %p", p);
     }
     lastaddr = (char *)(a + amt - 1);
     *lastaddr = 99;
-    printf("2\n");
+    printf("3\n");
 
     // fork a child and make sure heap is inherited/copied over
     if ((pid = fork()) < 0) {
