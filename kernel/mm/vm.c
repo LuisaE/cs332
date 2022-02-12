@@ -258,14 +258,12 @@ memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
     int old_mem_bound = region->end;
     int new_bound = region->end + size; 
     if (new_bound < region->start) {
-        kprintf("extend: %d\n", __LINE__);
         return ERR_VM_INVALID;
     }
 
     *old_bound = region->end;
     // A negative increment greater than current heap size has no effect and current bound is returned.
     if (size < 0 && (-1*size) > (region->as->heap->end - region->as->heap->start)) {
-        kprintf("extend: %d\n", __LINE__);
         return ERR_OK;
 
     }
@@ -277,12 +275,11 @@ memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
         struct memregion *cur_region = (struct memregion*) list_entry(n, struct memregion, as_node);
         if (cur_region->start > old_mem_bound) {
             if (region->end > cur_region->start && region->start < cur_region->end) {
-                kprintf("extend: %d\n", __LINE__);
                 return ERR_VM_BOUND;
             }
         }
     }
-    kprintf("extend: %d\n", __LINE__);
+
     return ERR_OK;
 }
 

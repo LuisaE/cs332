@@ -23,7 +23,6 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
     intr_set_level(INTR_ON);
 
     if (present) {
-        kprintf("PF: %d\n", __LINE__);
         proc_exit(-1);
     }
 
@@ -31,6 +30,7 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
 
     struct memregion *cur_memregion = as_find_memregion(&p->as, fault_addr, 8);
     if (!cur_memregion) {
+        // CHECK THIS
         kprintf("PF: %d\n", __LINE__);
         proc_exit(-1);
     }
@@ -42,7 +42,6 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
     
     paddr_t paddr;
     if (pmem_alloc(&paddr) != ERR_OK) {
-        kprintf("PF: %d\n", __LINE__);
         proc_exit(-1);
     }
     memset((void*) kmap_p2v(paddr), 0, pg_size);
@@ -50,7 +49,6 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
     err_t alloc_status = vpmap_map(cur_memregion->as->vpmap, fault_addr, paddr, 1, cur_memregion->perm);
 
     if (alloc_status != ERR_OK) {
-        kprintf("PF: %d\n", __LINE__);
         proc_exit(-1);
     }
 

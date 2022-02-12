@@ -9,16 +9,15 @@ main()
     size_t amt;
 
     // try growing heap by 256 pages
-    printf("1st\n");
     a = sbrk(0);
     amt = 256 * 4096;
-    printf("2\n");
     if ((p = sbrk(amt)) != a) {
         error("sbrk test failed to grow big address space or did not return old bound, return value was %p", p);
     }
     lastaddr = (char *)(a + amt - 1);
+    printf("Page fault here\n");
     *lastaddr = 99;
-    printf("3\n");
+    printf("After\n");
 
     // fork a child and make sure heap is inherited/copied over
     if ((pid = fork()) < 0) {

@@ -477,6 +477,7 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     memset((void*) kmap_p2v(paddr), 0, pg_size);
     
     // create memregion for stack
+    // Aaron: something wrong here? mapping incorrect
     if (as_map_memregion(&p->as, USTACK_UPPERBOUND-USTACK_PAGES*pg_size, USTACK_PAGES*pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
         err = ERR_NOMEM;
         goto error;
