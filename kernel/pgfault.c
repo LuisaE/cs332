@@ -30,10 +30,12 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
         if (pmem_alloc(&paddr) != ERR_OK) {
             proc_exit(-1);
         }
+        //copy?
         memset((void*) kmap_p2v(paddr), 0, pg_size);
-        vpmap_set_perm(cur_memregion->as->vpmap, kmap_p2v(paddr), pg_size, MEMPERM_RW);
+        vpmap_set_perm(cur_memregion->as->vpmap, kmap_p2v(paddr), pg_size, cur_memregion->perm);
         vpmap_lookup_vaddr(cur_memregion->as->vpmap, pg_round_down(fault_addr), &pfault_addr, NULL);
         pmem_dec_refcnt(pfault_addr);
+        return;
     }
 
     if (present) {

@@ -380,7 +380,7 @@ vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, 
         //paddr_t src_paddr = PTE_ADDR(*src_pte);
 
         // increment the count of each physical page
-        pmem_inc_refcnt(PTE_ADDR(*src_pte), pg_size);
+        pmem_inc_refcnt(PTE_ADDR(*src_pte), 1);
 
         // for destination, if we can't find the pte or there's already data, return error
         if ((dst_pte = find_pte(dstvpmap->pml4, dstaddr, 1)) == NULL ||
@@ -388,13 +388,14 @@ vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, 
             // Return an error if address already mapped
             return ERR_VPMAP_MAP;
         }
-        err_t err;
-        paddr_t paddr;
-        if ((err = pmem_alloc(&paddr)) != ERR_OK) {
-            return err;
-        }
-        memcpy((void*)KMAP_P2V(paddr), (void*)KMAP_P2V(PTE_ADDR(*src_pte)), pg_size);
-        *dst_pte = PPN(paddr) | PTE_P | 0;
+        // set dest entry to source pte, remove right perm from source.
+        // err_t err;
+        // paddr_t paddr;
+        // if ((err = pmem_alloc(&paddr)) != ERR_OK) {
+        //     return err;
+        // }
+        // memcpy((void*)KMAP_P2V(paddr), (void*)KMAP_P2V(PTE_ADDR(*src_pte)), pg_size);
+        // *dst_pte = PPN(paddr) | PTE_P | 0;
     }
     return ERR_OK;
 }
