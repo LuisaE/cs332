@@ -265,10 +265,7 @@ memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
     // A negative increment greater than current heap size has no effect and current bound is returned.
     if (size < 0 && (-1*size) > (region->as->heap->end - region->as->heap->start)) {
         return ERR_OK;
-
     }
-
-    region->end = new_bound;
 
     // overlapping regions:
     for (Node *n = list_begin(&region->as->regions); n != list_end(&region->as->regions); n = list_next(n)) {
@@ -280,6 +277,7 @@ memregion_extend(struct memregion *region, ssize_t size, vaddr_t *old_bound)
         }
     }
 
+    region->end = new_bound;
     return ERR_OK;
 }
 

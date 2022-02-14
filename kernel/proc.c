@@ -468,7 +468,7 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     err_t err;
     paddr_t paddr;
     vaddr_t stackptr;
-    vaddr_t stacktop = USTACK_UPPERBOUND-pg_size; 
+    vaddr_t stacktop = USTACK_UPPERBOUND-pg_size; // lowest address
 
     // allocate a page of physical memory for stack
     if ((err = pmem_alloc(&paddr)) != ERR_OK) {
@@ -477,7 +477,6 @@ stack_setup(struct proc *p, char **argv, vaddr_t* ret_stackptr)
     memset((void*) kmap_p2v(paddr), 0, pg_size);
     
     // create memregion for stack
-    // Aaron: something wrong here? mapping incorrect
     if (as_map_memregion(&p->as, USTACK_UPPERBOUND-USTACK_PAGES*pg_size, USTACK_PAGES*pg_size, MEMPERM_URW, NULL, 0, False) == NULL) {
         err = ERR_NOMEM;
         goto error;

@@ -12,7 +12,6 @@ size_t user_pgfault = 0;
 
 void
 handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
-    kprintf("Page fault %d\n", __LINE__);    
     if (user) {
         __sync_add_and_fetch(&user_pgfault, 1);
     } else {
@@ -23,20 +22,20 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
     intr_set_level(INTR_ON);
 
     if (present) {
+        // is page protection issue, just exit
         proc_exit(-1);
     }
 
     struct proc *p = proc_current();
 
-    struct memregion *cur_memregion = as_find_memregion(&p->as, fault_addr, 8);
+    struct memregion *cur_memregion = as_find_memregion(&p->as, fault_addr, 1);
     if (!cur_memregion) {
-        // CHECK THIS
-        kprintf("PF: %d\n", __LINE__);
+        // invalid region, exit
         proc_exit(-1);
     }
 
     if (write && (cur_memregion->perm == MEMPERM_R || cur_memregion->perm == MEMPERM_UR)) {
-        kprintf("PF: %d\n", __LINE__);
+        // invalid permission
         proc_exit(-1);
     }
     
