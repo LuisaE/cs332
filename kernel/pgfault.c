@@ -20,15 +20,27 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
 
     // turn on interrupt now that we have the fault address 
     intr_set_level(INTR_ON);
+    struct proc *p = proc_current();
+    struct memregion *cur_memregion = as_find_memregion(&p->as, fault_addr, 1);
+
+    if (present && write && cur_memregion && 
+    (cur_memregion->perm == MEMPERM_RW || cur_memregion->perm == MEMPERM_URW)) {
+        paddr_t paddr;
+        paddr_t pfault_addr;
+        if (pmem_alloc(&paddr) != ERR_OK) {
+            proc_exit(-1);
+        }
+        memset((void*) kmap_p2v(paddr), 0, pg_size);
+        vpmap_set_perm(cur_memregion->as->vpmap, kmap_p2v(paddr), pg_size, MEMPERM_RW);
+        vpmap_lookup_vaddr(cur_memregion->as->vpmap, pg_round_down(fault_addr), &pfault_addr, NULL);
+        pmem_dec_refcnt(pfault_addr);
+    }
 
     if (present) {
         // is page protection issue, just exit
         proc_exit(-1);
     }
 
-    struct proc *p = proc_current();
-
-    struct memregion *cur_memregion = as_find_memregion(&p->as, fault_addr, 1);
     if (!cur_memregion) {
         // invalid region, exit
         proc_exit(-1);

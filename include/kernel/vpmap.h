@@ -59,6 +59,13 @@ void vpmap_destroy(struct vpmap *vpmap);
 err_t vpmap_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, vaddr_t dstaddr, size_t n, memperm_t memperm);
 
 /*
+ * Update the parent's page table entry permission to read-only
+ * Copy the parent's page table to the child's page table 
+ * Return ERR_VPMAP_MAP if failed to map pages in dstvpmap
+ */
+err_t vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, vaddr_t dstaddr, size_t n);
+
+/*
  * Copy mapping of first level entries from kernel vpmap to dst vpmap. Permission is perserved.
  * Return ERR_VPMAP_MAP if failed to map pages in dstvpmap
  */

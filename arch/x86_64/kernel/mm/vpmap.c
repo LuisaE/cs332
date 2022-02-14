@@ -359,6 +359,47 @@ vpmap_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, vadd
 }
 
 err_t
+vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, vaddr_t dstaddr, size_t n) {
+    kassert(srcvpmap && dstvpmap);
+    pte_t *src_pte, *dst_pte;
+    size_t i;
+
+    srcaddr = pg_round_down(srcaddr);
+    dstaddr = pg_round_down(dstaddr);
+
+
+    for (i = 0; i < n; i++, srcaddr += pg_size, dstaddr += pg_size) {
+        // for source, if we can't find the pte or ppn == 0, continue
+        
+        if ((src_pte = find_pte(srcvpmap->pml4, srcaddr, 0)) == NULL ||
+            PPN(*src_pte) == 0) {
+            continue;
+        }
+
+        // change permission of src to read-only - AARON n & ~1
+        //paddr_t src_paddr = PTE_ADDR(*src_pte);
+
+        // increment the count of each physical page
+        pmem_inc_refcnt(PTE_ADDR(*src_pte), pg_size);
+
+        // for destination, if we can't find the pte or there's already data, return error
+        if ((dst_pte = find_pte(dstvpmap->pml4, dstaddr, 1)) == NULL ||
+            PPN(*dst_pte) != 0) {
+            // Return an error if address already mapped
+            return ERR_VPMAP_MAP;
+        }
+        err_t err;
+        paddr_t paddr;
+        if ((err = pmem_alloc(&paddr)) != ERR_OK) {
+            return err;
+        }
+        memcpy((void*)KMAP_P2V(paddr), (void*)KMAP_P2V(PTE_ADDR(*src_pte)), pg_size);
+        *dst_pte = PPN(paddr) | PTE_P | 0;
+    }
+    return ERR_OK;
+}
+
+err_t
 vpmap_copy_kernel_mapping(struct vpmap *dstvpmap) {
     kassert(dstvpmap);
     int pml4x;
