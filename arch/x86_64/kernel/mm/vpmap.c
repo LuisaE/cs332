@@ -376,10 +376,13 @@ vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, 
             continue;
         }
 
-        // change permission of src to read-only - AARON n & ~1
-        //paddr_t src_paddr = PTE_ADDR(*src_pte);
+        // change permission of src to read-only - change the second bit to 0
+        *src_pte = ~(1 << 1) & *src_pte;
 
         // increment the count of each physical page
+        struct page *page;
+        page = paddr_to_page(PTE_ADDR(*src_pte));
+        kprintf("About to increment %d \n", page->refcnt);
         pmem_inc_refcnt(PTE_ADDR(*src_pte), 1);
 
         // for destination, if we can't find the pte or there's already data, return error
@@ -388,14 +391,7 @@ vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, 
             // Return an error if address already mapped
             return ERR_VPMAP_MAP;
         }
-        // set dest entry to source pte, remove right perm from source.
-        // err_t err;
-        // paddr_t paddr;
-        // if ((err = pmem_alloc(&paddr)) != ERR_OK) {
-        //     return err;
-        // }
-        // memcpy((void*)KMAP_P2V(paddr), (void*)KMAP_P2V(PTE_ADDR(*src_pte)), pg_size);
-        // *dst_pte = PPN(paddr) | PTE_P | 0;
+        *dst_pte = *src_pte; // check if it doesn't work
     }
     return ERR_OK;
 }
