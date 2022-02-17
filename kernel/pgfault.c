@@ -31,18 +31,14 @@ handle_page_fault(vaddr_t fault_addr, int present, int write, int user) {
         if (pmem_alloc(&paddr) != ERR_OK) {
             proc_exit(-1);
         }
-        // reset the to 0
-        memset((void*) kmap_p2v(paddr), 0, pg_size);
         // copy the data from the copy-on-write page to the newly allocated page
         memcpy((void*) kmap_p2v(paddr), (void*) pg_round_down(fault_addr), pg_size);
         // set permission of new page to be the permission of the current memory region
         vpmap_set_perm(cur_memregion->as->vpmap, kmap_p2v(paddr), pg_size, cur_memregion->perm);
         // get the physical address of the fault address
         vpmap_lookup_vaddr(cur_memregion->as->vpmap, pg_round_down(fault_addr), &pfault_addr, NULL);
+        vpmap_map(cur_memregion->as->vpmap, fault_addr, paddr, 1, cur_memregion->perm);
         // decrement the count of the physical fault address's page
-        struct page *page;
-        page = paddr_to_page(pfault_addr);
-        kprintf("About to decrement %d \n", page->refcnt);
         pmem_dec_refcnt(pfault_addr);
         return;
     }

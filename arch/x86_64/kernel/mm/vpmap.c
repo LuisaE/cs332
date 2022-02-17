@@ -380,9 +380,6 @@ vpmap_cow_copy(struct vpmap *srcvpmap, struct vpmap *dstvpmap, vaddr_t srcaddr, 
         *src_pte = ~(1 << 1) & *src_pte;
 
         // increment the count of each physical page
-        struct page *page;
-        page = paddr_to_page(PTE_ADDR(*src_pte));
-        kprintf("About to increment %d \n", page->refcnt);
         pmem_inc_refcnt(PTE_ADDR(*src_pte), 1);
 
         // for destination, if we can't find the pte or there's already data, return error
