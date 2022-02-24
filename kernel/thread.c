@@ -113,3 +113,12 @@ thread_kstart(thread_func func, void *aux)
     thread_exit(func(aux));
     panic("thread_exit should not return");
 }
+
+void thread_set_priority (int priority) {
+    thread_current()->priority = priority;
+}
+
+int thread_get_priority () {
+    // TODO: check donation
+    return thread_current()->priority;
+}

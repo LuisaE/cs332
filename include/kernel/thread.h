@@ -54,6 +54,11 @@ struct thread* thread_idle();
 /* Start execution of a thread, func and aux should be NULL for user process threads. */
 void thread_start_context(struct thread *t, thread_func func, void *aux); 
 
+/* Set thread priority and check if the thread still has the highest priority, if not, yields */
+void thread_set_priority (int priority);
+
+/* Returns thread.priority or if it is a priority donation, return max donated priority. */
+int thread_get_priority (void);
 
 // void* thread_get_context(struct thread *t);
 /* Debug function */
