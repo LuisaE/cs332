@@ -116,6 +116,23 @@ thread_kstart(thread_func func, void *aux)
 
 void thread_set_priority (int priority) {
     thread_current()->priority = priority;
+
+    struct proc *p = proc_current();
+    struct thread *max_thread_priority;
+
+    for (Node *n = list_begin(&p->threads); n != list_end(&p->threads); n = list_next(n)) {
+        struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+        if (t->priority > priority && t->state == READY) {
+            max_thread_priority = t;
+        }
+    }
+
+    if (max_thread_priority) {
+        // make current ready, next thread to be running
+        yield();
+    }
+
+    return;
 }
 
 int thread_get_priority () {
