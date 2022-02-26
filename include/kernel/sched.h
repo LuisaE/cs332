@@ -22,7 +22,9 @@ void sched_ready(struct thread*);
  * Schedule another thread to run. 
  * Current thread transition to the next state, release lock passed in if not null 
 */
-void sched_sched(threadstate_t next_state, void* lock) ;
+void sched_sched(threadstate_t next_state, void* lock);
 
+
+void yield(threadstate_t next_state, void* lock);
 
 #endif /* _SCHED_H_ */

@@ -129,7 +129,7 @@ void thread_set_priority (int priority) {
 
     if (max_thread_priority) {
         // make current ready, next thread to be running
-        yield();
+        yield(READY, NULL);
     }
 
     return;

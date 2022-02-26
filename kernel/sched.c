@@ -110,3 +110,7 @@ sched(void)
     }
     return prev && prev->state == ZOMBIE ? prev : NULL;
 }
+
+void yield(threadstate_t next_state, void* lock) {
+    sched_sched(next_state, lock);
+}
