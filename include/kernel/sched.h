@@ -1,6 +1,9 @@
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
+#define PRI_MIN 0
+#define PRI_MAX 63
+
 #include <kernel/synch.h>
 #include <kernel/thread.h>
 
@@ -24,7 +27,12 @@ void sched_ready(struct thread*);
 */
 void sched_sched(threadstate_t next_state, void* lock);
 
-
+/* 
+ * Check if the current thread is the highest priority thread
+ * If yes, return
+ * If not, schedule the highest priority thread to run
+ * and current thread transition to the next state, release lock passed in if not null 
+*/
 void yield(threadstate_t next_state, void* lock);
 
 #endif /* _SCHED_H_ */

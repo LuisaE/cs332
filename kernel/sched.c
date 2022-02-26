@@ -111,6 +111,42 @@ sched(void)
     return prev && prev->state == ZOMBIE ? prev : NULL;
 }
 
+
 void yield(threadstate_t next_state, void* lock) {
-    sched_sched(next_state, lock);
+    struct thread *curr = thread_current();
+    spinlock_acquire(&sched_lock);
+
+    struct thread *max_priority_thread;
+    void *cpu = mycpu();
+
+    // get the highest priority thread in the ready list
+    for (Node *n = list_begin(&ready_queue); n != list_end(&ready_queue); n = list_next(n)) {
+        struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+        if (t->priority > curr->priority) {
+            max_priority_thread = t;
+        }
+    }
+    
+    // if there isn't a higher priority thread, return
+    if (!max_priority_thread) {
+        return;
+    }
+
+    // add the current thread to the read list
+    if (curr != cpu_idle_thread(mycpu())) {
+        list_append(ready_queue, &curr->node);
+    }
+    curr->state = next_state;
+    if (lock) {
+        lock_release(lock);
+    }
+    
+    // change the max thread to be running
+    // and remove it from the ready list
+    list_remove(max_priority_thread);
+    max_priority_thread->state = RUNNING;
+    // schedule the max priority thread to run
+    cpu_switch_thread(cpu, max_priority_thread);
+
+    spinlock_release(&sched_lock);
 }
