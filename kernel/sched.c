@@ -55,7 +55,23 @@ sched_ready(struct thread *t)
     kassert(t);
     spinlock_acquire(&sched_lock);
     t->state = READY;
-    list_append(ready_queue, &t->node);
+    // take priority into consideration
+    struct thread *curr = thread_current();
+    if (curr->priority < t->priority) {
+        // t takes over
+        // add the current thread to the ready list
+        if (curr != cpu_idle_thread(mycpu())) {
+            list_append(ready_queue, &curr->node);
+        }
+        curr->state = READY;
+        list_append(ready_queue, &curr->node);
+        t->state = RUNNING;
+        // schedule the max priority thread to run
+        cpu_switch_thread(mycpu(), t);
+    } else {
+        list_append(ready_queue, &t->node);
+    }
+
     spinlock_release(&sched_lock);
 }
 
@@ -92,8 +108,10 @@ sched(void)
     struct thread *prev = NULL;
     struct thread *next = NULL;
 
+    // change from FIFO to priority queue
     if (!list_empty(ready_queue)) {
         Node *n = list_begin(ready_queue);
+        // change this
         next = (struct thread*) list_entry(n, struct thread, node);
         kassert(next->state == READY);
         list_remove(n);
@@ -120,7 +138,7 @@ void yield(threadstate_t next_state, void* lock) {
     void *cpu = mycpu();
 
     // get the highest priority thread in the ready list
-    for (Node *n = list_begin(&ready_queue); n != list_end(&ready_queue); n = list_next(n)) {
+    for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
         struct thread *t = (struct thread*) list_entry(n, struct thread, node);
         if (t->priority > curr->priority) {
             max_priority_thread = t;
@@ -132,7 +150,7 @@ void yield(threadstate_t next_state, void* lock) {
         return;
     }
 
-    // add the current thread to the read list
+    // add the current thread to the ready list
     if (curr != cpu_idle_thread(mycpu())) {
         list_append(ready_queue, &curr->node);
     }
@@ -143,7 +161,7 @@ void yield(threadstate_t next_state, void* lock) {
     
     // change the max thread to be running
     // and remove it from the ready list
-    list_remove(max_priority_thread);
+    list_remove(&max_priority_thread->thread_node);
     max_priority_thread->state = RUNNING;
     // schedule the max priority thread to run
     cpu_switch_thread(cpu, max_priority_thread);
