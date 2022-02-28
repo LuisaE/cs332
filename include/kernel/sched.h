@@ -1,9 +1,6 @@
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
-#define PRI_MIN 0
-#define PRI_MAX 63
-
 #include <kernel/synch.h>
 #include <kernel/thread.h>
 

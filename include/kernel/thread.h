@@ -6,6 +6,8 @@
 
 #define THREAD_NAME_LEN 32
 #define DEFAULT_PRI 10
+#define PRI_MIN 0
+#define PRI_MAX 63
 
 /* States a thread can be in. */
 typedef enum {
