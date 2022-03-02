@@ -23,9 +23,13 @@ kernel_init(void *args)
     mp_start_ap();
     kprintf("OSV initialization...Done\n\n");
 
+#ifdef SCHED_TEST
+    
+#else
     // spawn initial process - init
     char* argv[2] = {"init", NULL};
     kassert(proc_spawn("init", argv, &init_proc) == ERR_OK);
+#endif
     return 0;
 }
 

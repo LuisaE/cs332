@@ -80,6 +80,8 @@ sched_sched(threadstate_t next_state, void* lock)
 {
     struct thread *curr = thread_current();
     spinlock_acquire(&sched_lock);
+    // ASK AARON for sure if whenever we call sched_sched, we 
+    // want the current thread to stop running regarless of its priority
     if (next_state == READY && curr != cpu_idle_thread(mycpu())) {
         list_append(ready_queue, &curr->node);
     }
@@ -108,13 +110,11 @@ sched(void)
     struct thread *prev = NULL;
     struct thread *next = NULL;
 
-    // change from FIFO to priority queue
     if (!list_empty(ready_queue)) {
-        Node *n = list_begin(ready_queue);
-        // change this
-        next = (struct thread*) list_entry(n, struct thread, node);
+        // schedule the highest priority thread in the ready queue to run
+        next = get_max_priority_thread();
         kassert(next->state == READY);
-        list_remove(n);
+        list_remove(&next->node);
     } else {
         // if current thread is not the idle thread, schedules to idle thread of the cpu
         struct thread *idle = cpu_idle_thread(cpu);
@@ -167,4 +167,17 @@ void yield(threadstate_t next_state, void* lock) {
     cpu_switch_thread(cpu, max_priority_thread);
 
     spinlock_release(&sched_lock);
+}
+
+struct thread* get_max_priority_thread() {
+    struct thread* max_priority_thread;
+    int max_priority = -1;
+    for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
+        struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+        if (max_priority < t->priority) {
+            max_priority_thread = t;
+            max_priority = t->priority;
+        }
+    }
+    return max_priority_thread;
 }

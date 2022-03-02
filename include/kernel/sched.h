@@ -32,4 +32,9 @@ void sched_sched(threadstate_t next_state, void* lock);
 */
 void yield(threadstate_t next_state, void* lock);
 
+/*
+* Return the ready thread with the highest priority 
+*/
+struct thread* get_max_priority_thread();
+
 #endif /* _SCHED_H_ */
