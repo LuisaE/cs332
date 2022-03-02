@@ -119,6 +119,8 @@ $(BUILD)/tools/mkfs: tools/mkfs.c
 	$(MKDIR_P) $(@D)
 	$(HOST_CC) $(TOOLS_CFLAGS) -o $@ $<
 
+
+
 ifndef CPUS
 CPUS := 2
 endif
@@ -158,3 +160,7 @@ qemu-gdb: osv
 gdb: $(GDBINIT)
 	ln -s -f $(GDBINIT) .gdbinit
 	$(GDB)
+
+### TODO: create a make object ###
+qemu-sched-test: osv
+	$(QEMU) $(QEMUOPTS) $(DRIVE_OPTS) -nographic
