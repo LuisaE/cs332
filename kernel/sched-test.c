@@ -13,40 +13,48 @@
 #include <kernel/pmem.h>
 #include <lib/errcode.h>
 
-void *idle_thread () {
+int idle_thread(void *args) {
     for (;;) { }
 }
 
 int simple_priority_sched_test() {
-    struct thread *t = thread_create("init/testing thread", NULL, DEFAULT_PRI);
+    struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
     kassert(t);
     thread_start_context(t, idle_thread, NULL);
-    pass("simple_priority_sched_test");
-    exit(0);
+    kprintf("simple_priority_sched_test\n");
+
+    // Ask Aaron! if exit(0); 
+    return 0;
 }
 
 int tie_priority_sched_test() {
-    pass("tie_priority_sched_test");
-    exit(0);
+    kprintf("tie_priority_sched_test\n");
+
+    return 0;
 }
 
 int inversion_priority_sched_test() {
-    pass("inversion_priority_sched_test");
-    exit(0);
+    kprintf("inversion_priority_sched_test\n");
+
+    return 0;
 }
 
 int add_higher_thread_test() {
-    pass("add_higher_thread_test");
-    exit(0);
+    kprintf("add_higher_thread_test\n");
+
+    return 0;
 }
 
 int get_set_priority_test() {
-    struct thread *t = thread_create("init/testing thread", NULL, DEFAULT_PRI);
+    struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
     kassert(t);
+
     thread_start_context(t, idle_thread, NULL);
     int desired_priority = 10;
     thread_set_priority(desired_priority);
     kassert(desired_priority == thread_get_priority());
-    pass("get_set_priority_test");
-    exit(0);
+
+    kprintf("get_set_priority_test\n");
+
+    return 0;
 }

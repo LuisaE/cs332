@@ -24,12 +24,12 @@ kernel_init(void *args)
     kprintf("OSV initialization...Done\n\n");
 
 #ifdef SCHED_TEST
-    
-#else
+    kprintf("Sched mode\n");
+    return 0;
+#endif
     // spawn initial process - init
     char* argv[2] = {"init", NULL};
     kassert(proc_spawn("init", argv, &init_proc) == ERR_OK);
-#endif
     return 0;
 }
 
