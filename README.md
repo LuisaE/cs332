@@ -16,14 +16,17 @@ Simple priority scheduling:
 - thread.c: implement thread_get_priority and thread_set_priority
 - sched.h: added header for yield
 - sched.c: implemented yield
-- user/final folder: all test cases for this lab (?)
+- kernel/sched-test: all test cases for this lab
 
 ## What aspects of the implementation each test case tests
 
-- donation-test: 
-- priority-simple-test: 
-- priority-tie-test:
-- bad-args: priority should not be set if out of bounds
+To run the tests run make qemu-shed-test and note the print statements
+
+- simple_priority_sched_test: 
+- tie_priority_sched_test: 
+- inversion_priority_sched_test:
+- add_higher_thread_test: 
+- get_set_priority_test: test if the priority of a thread is correctly set
 
 ## Features or edge cases the test cases do not address
 
