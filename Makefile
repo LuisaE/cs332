@@ -107,8 +107,12 @@ $(BUILD)/user/%.o: user/%.c $(ARCH_USER_OBJS) $(ULIB_OBJS)
 
 $(BUILD)/%.o: %.c
 	$(MKDIR_P) $(@D)
+ifeq ($(TEST), true)
+	$(CC) $(CFLAGS) -D SCHED_TEST $(KERNEL_CFLAGS) -o $@ -c $< 
+else
 	$(CC) $(CFLAGS) $(KERNEL_CFLAGS) -o $@ -c $<
-
+endif
+	
 $(BUILD)/%.o: %.S
 	$(MKDIR_P) $(@D)
 	$(CC) $(CFLAGS) -o $@ -c $<
