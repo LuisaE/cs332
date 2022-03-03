@@ -134,6 +134,8 @@ void yield(threadstate_t next_state, void* lock) {
     struct thread *curr = thread_current();
     spinlock_acquire(&sched_lock);
 
+    kprintf("%d in yield \n", __LINE__);
+
     struct thread *max_priority_thread;
     void *cpu = mycpu();
 
@@ -145,6 +147,8 @@ void yield(threadstate_t next_state, void* lock) {
         }
     }
     
+    kprintf("%d in yield \n", __LINE__);
+
     // if there isn't a higher priority thread, return
     if (!max_priority_thread) {
         return;
@@ -158,14 +162,16 @@ void yield(threadstate_t next_state, void* lock) {
     if (lock) {
         lock_release(lock);
     }
-    
+    kprintf("%d in yield \n", __LINE__);
     // change the max thread to be running
     // and remove it from the ready list
-    list_remove(&max_priority_thread->thread_node);
+    list_remove(&max_priority_thread->node);
+    kprintf("%d in yield \n", __LINE__);
     max_priority_thread->state = RUNNING;
     // schedule the max priority thread to run
+    kprintf("%d in yield \n", __LINE__);
     cpu_switch_thread(cpu, max_priority_thread);
-
+    kprintf("%d in yield \n", __LINE__);
     spinlock_release(&sched_lock);
 }
 

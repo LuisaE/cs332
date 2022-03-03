@@ -12,6 +12,7 @@
 #include <kernel/vpmap.h>
 #include <kernel/pmem.h>
 #include <lib/errcode.h>
+#include <kernel/sched_test.h>
 
 int kernel_init(void *args);
 
@@ -25,6 +26,7 @@ kernel_init(void *args)
 
 #ifdef SCHED_TEST
     kprintf("Sched mode\n");
+    get_set_priority_test();
     return 0;
 #endif
     // spawn initial process - init

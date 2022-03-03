@@ -124,7 +124,6 @@ $(BUILD)/tools/mkfs: tools/mkfs.c
 	$(HOST_CC) $(TOOLS_CFLAGS) -o $@ $<
 
 
-
 ifndef CPUS
 CPUS := 2
 endif
