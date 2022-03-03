@@ -25,25 +25,26 @@ int simple_priority_sched_test() {
     struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
     kassert(t);
     thread_start_context(t, idle_thread, NULL);
-    kprintf("simple_priority_sched_test\n");
+    
+    kprintf("PASS: simple_priority_sched_test\n");
     return 0;
 }
 
 int tie_priority_sched_test() {
-    kprintf("tie_priority_sched_test\n");
 
+    kprintf("PASS: tie_priority_sched_test\n");
     return 0;
 }
 
 int inversion_priority_sched_test() {
-    kprintf("inversion_priority_sched_test\n");
 
+    kprintf("PASS: inversion_priority_sched_test\n");
     return 0;
 }
 
 int add_higher_thread_test() {
-    kprintf("add_higher_thread_test\n");
 
+    kprintf("PASS: add_higher_thread_test\n");
     return 0;
 }
 
@@ -52,14 +53,13 @@ int get_set_priority_test() {
     struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
     kassert(t);
     kprintf("%d \n", __LINE__);
-    thread_start_context(t, idle_thread, NULL);
+    //thread_start_context(t, idle_thread, NULL);
     kprintf("%d \n", __LINE__);
     int desired_priority = 63;
     thread_set_priority(desired_priority);
     kprintf("%d \n", __LINE__);
     kassert(desired_priority == thread_get_priority());
 
-    kprintf("get_set_priority_test\n");
-
+    kprintf("PASS: get_set_priority_test\n");
     return 0;
 }

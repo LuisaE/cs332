@@ -25,7 +25,12 @@ kernel_init(void *args)
     kprintf("OSV initialization...Done\n\n");
 
 #ifdef SCHED_TEST
-    kprintf("Sched mode\n");
+    kprintf("\nScheduling test mode\n");
+    kprintf("\n ------ FINAL PROJECT TESTS ----- \n");
+    //simple_priority_sched_test();
+    //tie_priority_sched_test();
+    //inversion_priority_sched_test();
+    //add_higher_thread_test();
     get_set_priority_test();
     return 0;
 #endif

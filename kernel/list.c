@@ -55,7 +55,6 @@ list_append_ordered(List *list, Node *node, comparator *compare, void *aux)
 Node*
 list_remove(Node* node)
 {   
-    kprintf("%d in remove \n", __LINE__);
     kassert(node);
     node->prev->next = node->next;
     node->next->prev = node->prev;
