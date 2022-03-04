@@ -8,6 +8,8 @@
 
 List _ready_queue;
 List* ready_queue = &_ready_queue;
+size_t thread_switch_count = 0;
+
 /* 
  * Schedules a new thread, if no thread on the ready queue
  * current cpu's idle thread is scheduled. Returns a thread
@@ -61,11 +63,12 @@ sched_ready(struct thread *t)
         // t takes over
         // add the current thread to the ready list
         if (curr != cpu_idle_thread(mycpu())) {
+            curr->state = READY;
             list_append(ready_queue, &curr->node);
         }
-        curr->state = READY;
-        list_append(ready_queue, &curr->node);
+        //list_append(ready_queue, &curr->node);
         t->state = RUNNING;
+        thread_switch_count++;
         // schedule the max priority thread to run
         cpu_switch_thread(mycpu(), t);
     } else {
@@ -80,6 +83,7 @@ sched_sched(threadstate_t next_state, void* lock)
 {
     struct thread *curr = thread_current();
     spinlock_acquire(&sched_lock);
+    //kprintf("sched_shed %d\n", __LINE__);
     // ASK AARON for sure if whenever we call sched_sched, we 
     // want the current thread to stop running regarless of its priority
     if (next_state == READY && curr != cpu_idle_thread(mycpu())) {
@@ -122,6 +126,7 @@ sched(void)
     }
 
     next->state = RUNNING;
+    thread_switch_count++;
     if (curr != next) {
         prev = cpu_switch_thread(cpu, next);
         kassert(prev);
@@ -134,23 +139,21 @@ void yield(threadstate_t next_state, void* lock) {
     struct thread *curr = thread_current();
     spinlock_acquire(&sched_lock);
 
-    kprintf("%d in yield \n", __LINE__);
-
-    struct thread *max_priority_thread;
+    struct thread *max_priority_thread = NULL;
     void *cpu = mycpu();
 
     // get the highest priority thread in the ready list
     for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
         struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+        kassert(t->state == READY);
         if (t->priority > curr->priority) {
             max_priority_thread = t;
         }
     }
-    
-    kprintf("%d in yield \n", __LINE__);
 
     // if there isn't a higher priority thread, return
     if (!max_priority_thread) {
+        spinlock_release(&sched_lock);
         return;
     }
 
@@ -162,21 +165,21 @@ void yield(threadstate_t next_state, void* lock) {
     if (lock) {
         lock_release(lock);
     }
-    kprintf("%d in yield \n", __LINE__);
     // change the max thread to be running
     // and remove it from the ready list
+
+    kassert(max_priority_thread->state == READY);
     list_remove(&max_priority_thread->node);
-    kprintf("%d in yield \n", __LINE__);
     max_priority_thread->state = RUNNING;
+    thread_switch_count++;
+
     // schedule the max priority thread to run
-    kprintf("%d in yield \n", __LINE__);
     cpu_switch_thread(cpu, max_priority_thread);
-    kprintf("%d in yield \n", __LINE__);
     spinlock_release(&sched_lock);
 }
 
 struct thread* get_max_priority_thread() {
-    struct thread* max_priority_thread;
+    struct thread* max_priority_thread = NULL;
     int max_priority = -1;
     for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
         struct thread *t = (struct thread*) list_entry(n, struct thread, node);
@@ -186,4 +189,8 @@ struct thread* get_max_priority_thread() {
         }
     }
     return max_priority_thread;
+}
+
+int get_thread_switch_count() {
+    return thread_switch_count;
 }

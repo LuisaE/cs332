@@ -37,4 +37,6 @@ void yield(threadstate_t next_state, void* lock);
 */
 struct thread* get_max_priority_thread();
 
+int get_thread_switch_count();
+
 #endif /* _SCHED_H_ */

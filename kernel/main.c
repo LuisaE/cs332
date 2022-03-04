@@ -32,6 +32,7 @@ kernel_init(void *args)
     //inversion_priority_sched_test();
     //add_higher_thread_test();
     get_set_priority_test();
+    add_higher_thread_test();
     return 0;
 #endif
     // spawn initial process - init

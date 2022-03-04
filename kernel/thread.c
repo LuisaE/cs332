@@ -120,7 +120,6 @@ void thread_set_priority (int priority) {
         return;
     }
     thread_current()->priority = priority;
-    kprintf("%d in thread \n", __LINE__);
     yield(READY, NULL); // Ask Aaron about lock: when and how to pass
     return;
 }

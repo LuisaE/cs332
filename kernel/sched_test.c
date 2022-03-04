@@ -15,9 +15,7 @@
 #include <kernel/sched_test.h>
 
 int idle_thread(void *args) {
-    for (int i = 0; i < 10; i++) { 
-        kprintf("CHECK \n");
-    }
+    for (int i = 0; i < 10000; i++) { }
     return 0;
 }
 
@@ -43,23 +41,22 @@ int inversion_priority_sched_test() {
 }
 
 int add_higher_thread_test() {
-
+    kprintf("add_higher_thread_test\n");
+    int switch_count = get_thread_switch_count();
+    struct thread *t = thread_create("sched/testing thread", NULL, PRI_MAX);
+    thread_start_context(t, idle_thread, NULL);
+    // 2 cpus, figure out what is running, test thread, count per cpu
+    kassert(switch_count + 1 == get_thread_switch_count());
     kprintf("PASS: add_higher_thread_test\n");
     return 0;
 }
 
 int get_set_priority_test() {
-    kprintf("before get_set_priority_test\n");
     struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
-    kassert(t);
-    kprintf("%d \n", __LINE__);
-    //thread_start_context(t, idle_thread, NULL);
-    kprintf("%d \n", __LINE__);
-    int desired_priority = 63;
+    thread_start_context(t, idle_thread, NULL);
+    int desired_priority = PRI_MAX - 1;
     thread_set_priority(desired_priority);
-    kprintf("%d \n", __LINE__);
     kassert(desired_priority == thread_get_priority());
-
     kprintf("PASS: get_set_priority_test\n");
     return 0;
 }
