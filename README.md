@@ -26,7 +26,7 @@ Simple priority scheduling:
 
 ## What aspects of the implementation each test case tests
 
-To run the tests run `TEST=true make qemu` and note the print statements
+To run the tests run `TEST=true make qemu` and note the print statements. We are running qemu with 1 CPU to facilitate testing. 
 
 - simple_priority_sched_test: 
 - tie_priority_sched_test: 

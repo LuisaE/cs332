@@ -15,20 +15,60 @@
 #include <kernel/sched_test.h>
 
 int idle_thread(void *args) {
-    for (int i = 0; i < 10000; i++) { }
+    for (int i = 0; i < 100; i++) { }
+    return 0;
+}
+
+int write_to_file_thread(void *args) {
+    char *buf = "A";
+    offset_t offset = 0;
+    for (int i = 0; i < 100; i++) { 
+        fs_write_file((struct file *)args, (void *) buf, 1, &offset);
+    }
     return 0;
 }
 
 int simple_priority_sched_test() {
-    struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
-    kassert(t);
-    thread_start_context(t, idle_thread, NULL);
+    struct thread *high_thread = thread_create("sched/testing thread 1", NULL, DEFAULT_PRI + 3);
+    struct thread *medium_thread = thread_create("sched/testing thread 2", NULL, DEFAULT_PRI + 2);
+    struct thread *low_thread = thread_create("sched/testing thread 3", NULL, DEFAULT_PRI + 1);
+
+    struct file *f;
+
+    // ASK Aaron!
+    fs_open_file("/", FS_RDWR, 0, &f);
+    kprintf("file size: %d\n", f->f_inode->i_size);
+    kprintf("In test: %d\n", __LINE__);
+
+    thread_start_context(high_thread, write_to_file_thread, (void *) f);
+
+    kprintf("In test: %d\n", __LINE__);
+
+    char *read = kmalloc(101);
+    offset_t offset = 0;
+
+    kprintf("file size: %d\n", f->f_inode->i_size);
+    kprintf("In test: %d\n", __LINE__);
+
+    fs_read_file(f, (void *) read, 1, &offset);
+
+    kprintf("In test: %d\n", __LINE__);
+
+    kprintf("%s\n", read);
+
+    kprintf("In test: %d\n", __LINE__);
+    thread_start_context(medium_thread, idle_thread, NULL);
+    thread_start_context(low_thread, idle_thread, NULL);
+
+    //open file and check if 100 A, 100 B, 100 C
     
+    fs_close_file(f);
     kprintf("PASS: simple_priority_sched_test\n");
     return 0;
 }
 
 int tie_priority_sched_test() {
+    // do the same as in simple, but letters should be interleaved - never 100 A, then 100 B ...
 
     kprintf("PASS: tie_priority_sched_test\n");
     return 0;
@@ -41,12 +81,17 @@ int inversion_priority_sched_test() {
 }
 
 int add_higher_thread_test() {
-    kprintf("add_higher_thread_test\n");
     int switch_count = get_thread_switch_count();
-    struct thread *t = thread_create("sched/testing thread", NULL, PRI_MAX);
-    thread_start_context(t, idle_thread, NULL);
-    // 2 cpus, figure out what is running, test thread, count per cpu
-    kassert(switch_count + 1 == get_thread_switch_count());
+
+    struct thread *high_thread = thread_create("sched/high thread", NULL, PRI_MAX);
+    thread_start_context(high_thread, idle_thread, NULL);
+
+    // 2 switches: from testing thread -> high thread and then high thread -> testing thread
+    // when high thread is done
+    int switch_after = get_thread_switch_count();
+    kassert(high_thread->state == ZOMBIE);
+    kassert(switch_count + 2 == switch_after);
+
     kprintf("PASS: add_higher_thread_test\n");
     return 0;
 }
@@ -54,9 +99,11 @@ int add_higher_thread_test() {
 int get_set_priority_test() {
     struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
     thread_start_context(t, idle_thread, NULL);
+
     int desired_priority = PRI_MAX - 1;
     thread_set_priority(desired_priority);
     kassert(desired_priority == thread_get_priority());
+
     kprintf("PASS: get_set_priority_test\n");
     return 0;
 }

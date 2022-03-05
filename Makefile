@@ -125,7 +125,7 @@ $(BUILD)/tools/mkfs: tools/mkfs.c
 
 
 ifndef CPUS
-CPUS := 2
+CPUS := 1
 endif
 
 # Dependency generation
