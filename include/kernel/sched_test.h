@@ -24,3 +24,5 @@ int inversion_priority_sched_test();
 int add_higher_thread_test();
 
 int get_set_priority_test();
+
+int lower_thread_priority_should_yield();

@@ -32,6 +32,9 @@ To run the tests run `TEST=true make qemu` and note the print statements. We are
 - tie_priority_sched_test: 
 - inversion_priority_sched_test:
 - add_higher_thread_test: add a thread with higher priority to the ready list - it should start running. 
+- lower_thread_priority_should_yield: create a high priority thread which should start
+running and then lower its own priority - it should yield to the other threads (running to ready)
+and other thread should take over. 
 - get_set_priority_test: test if the priority of a thread is correctly set
 
 ## Features or edge cases the test cases do not address
