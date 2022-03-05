@@ -10,7 +10,8 @@ Simple priority scheduling:
 
 ## Any non-functional features you attempted to implement
 
-- priority donation
+- Priority donation
+- Ties
 
 ## The files you added or modified, and how they relate to the features above
 
@@ -22,6 +23,7 @@ Simple priority scheduling:
 - kernel/sched_test: all test cases for this lab
 - include/kernel/sched_test: header file for sched_test file
 - Makefile: added option to run osv in test mode to run priority scheduling tests in kernel mode
+Changed number of CPUs
 - kernel/main: either runs regular osv or in test mode
 
 ## What aspects of the implementation each test case tests
@@ -39,7 +41,10 @@ and other thread should take over.
 
 ## Features or edge cases the test cases do not address
 
+- Work in progress: Priority donation and ties. 
+
 ## Known bugs
 
+None that we know.
 
 ## Anything interesting you would like to share
