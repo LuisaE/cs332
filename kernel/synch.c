@@ -26,6 +26,10 @@ spinlock_init(struct spinlock* lock)
 void
 spinlock_acquire(struct spinlock* lock)
 {
+    // TODO: change this for priority donation
+    // check if lock->holder->priority < current thread priority, donation
+    // mark current thread as waiting for this lock to get the priority back
+
     if (!synch_enabled) {
         return;
     }
@@ -71,6 +75,7 @@ spinlock_try_acquire(struct spinlock* lock)
 void
 spinlock_release(struct spinlock* lock)
 {
+    // TODO: change for priority donation, awake donated thread. Has to have boolean? 
     if (!synch_enabled) {
         return;
     }
