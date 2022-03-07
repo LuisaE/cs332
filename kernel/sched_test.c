@@ -29,18 +29,38 @@ int thread_lower_its_priority(void *args) {
     return 0;
 }
 
-int write_to_file_thread(void *args) {
+int write_to_file_thread(void *f) {
+    kprintf("In write_to_file_thread: %d\n", __LINE__);
     char *buf = "A";
     offset_t offset = 0;
-    for (int i = 0; i < 100; i++) { 
-        fs_write_file((struct file *)args, (void *) buf, 1, &offset);
+    for (int i = 0; i < 100; i++) {
+        kprintf("In write_to_file_thread: %d\n", __LINE__);
+        fs_write_file((struct file *)f, (void *) buf, 1, &offset);
     }
+    kprintf("In write_to_file_thread: %d\n", __LINE__);
+    return 0;
+}
+
+int low_thread_acquire_lock(void *lock) {
+    spinlock_acquire((struct spinlock*) lock);
+    thread_set_priority(DEFAULT_PRI-1);
+    for (int i = 0; i < 500000; i++) { }
+    spinlock_release((struct spinlock*) lock);
+    return 0;
+}
+
+int high_thread_acquire_lock(void *lock) {
+    spinlock_acquire((struct spinlock*) lock);
+    for (int i = 0; i < 5000; i++) { }
+    spinlock_release((struct spinlock*) lock);
+    kprintf("PASS: inversion_priority_sched_test\n");
     return 0;
 }
 
 // Testing functions
 
 int simple_priority_sched_test() {
+
     struct thread *high_thread = thread_create("sched/testing thread 1", NULL, DEFAULT_PRI + 3);
     struct thread *medium_thread = thread_create("sched/testing thread 2", NULL, DEFAULT_PRI + 2);
     struct thread *low_thread = thread_create("sched/testing thread 3", NULL, DEFAULT_PRI + 1);
@@ -49,19 +69,21 @@ int simple_priority_sched_test() {
 
     // ASK Aaron!
     fs_open_file("/", FS_RDWR, 0, &f);
-    kprintf("file size: %d\n", f->f_inode->i_size);
-    kprintf("In test: %d\n", __LINE__);
+    kprintf("file size before: %d\n", f->f_inode->i_size);
+    // kprintf("In test: %d\n", __LINE__);
 
     thread_start_context(high_thread, write_to_file_thread, (void *) f);
-
-    kprintf("In test: %d\n", __LINE__);
+    for (int i = 0; i < 500000000; i++) { }
+    kprintf("file size after: %d\n", f->f_inode->i_size);
+    // kprintf("In test: %d\n", __LINE__);
 
     char *read = kmalloc(101);
     offset_t offset = 0;
 
-    kprintf("file size: %d\n", f->f_inode->i_size);
+    // kprintf("file size: %d\n", f->f_inode->i_size);
     kprintf("In test: %d\n", __LINE__);
 
+    // ISSUE MIGHT BE HERE?
     fs_read_file(f, (void *) read, 1, &offset);
 
     kprintf("In test: %d\n", __LINE__);
@@ -81,14 +103,20 @@ int simple_priority_sched_test() {
 
 int tie_priority_sched_test() {
     // do the same as in simple, but letters should be interleaved - never 100 A, then 100 B ...
-
     kprintf("PASS: tie_priority_sched_test\n");
     return 0;
 }
 
 int inversion_priority_sched_test() {
 
-    kprintf("PASS: inversion_priority_sched_test\n");
+    struct spinlock lock;
+    spinlock_init(&lock);
+
+    struct thread *low_thread = thread_create("sched/testing thread 4", NULL, DEFAULT_PRI + 1);
+    struct thread *high_thread = thread_create("sched/testing thread 4", NULL, DEFAULT_PRI + 2);
+    thread_start_context(low_thread, low_thread_acquire_lock, &lock);
+    thread_start_context(high_thread, high_thread_acquire_lock, &lock);
+    
     return 0;
 }
 

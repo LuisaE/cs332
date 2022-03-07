@@ -772,6 +772,7 @@ fs_read_file(struct file *file, void *buf, size_t count, offset_t *ofs)
 {
     ssize_t rs = 0;
     if (file->oflag != FS_WRONLY) {
+        kprintf("In fs_read_file: %d\n", __LINE__);
         rs = file->f_ops->read(file, buf, count, ofs);
     }
     return rs;
