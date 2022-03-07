@@ -179,6 +179,7 @@ void yield(threadstate_t next_state, void* lock) {
 }
 
 struct thread* get_max_priority_thread() {
+    // get the thread with the highest priority from the ready list
     struct thread* max_priority_thread = NULL;
     int max_priority = -1;
     for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
@@ -192,5 +193,6 @@ struct thread* get_max_priority_thread() {
 }
 
 int get_thread_switch_count() {
+    // helper function, used for testing
     return thread_switch_count;
 }

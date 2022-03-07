@@ -61,9 +61,9 @@ int high_thread_acquire_lock(void *lock) {
 
 int simple_priority_sched_test() {
 
-    struct thread *high_thread = thread_create("sched/testing thread 1", NULL, DEFAULT_PRI + 3);
-    struct thread *medium_thread = thread_create("sched/testing thread 2", NULL, DEFAULT_PRI + 2);
-    struct thread *low_thread = thread_create("sched/testing thread 3", NULL, DEFAULT_PRI + 1);
+    struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
+    struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
+    struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
 
     struct file *f;
 
@@ -112,18 +112,19 @@ int inversion_priority_sched_test() {
     struct spinlock lock;
     spinlock_init(&lock);
 
-    struct thread *low_thread = thread_create("sched/testing thread 4", NULL, DEFAULT_PRI + 1);
-    struct thread *high_thread = thread_create("sched/testing thread 4", NULL, DEFAULT_PRI + 2);
+    struct thread *low_thread = thread_create("inversion_priority/thread low", NULL, DEFAULT_PRI + 1);
+    struct thread *high_thread = thread_create("inversion_priority/thread high", NULL, DEFAULT_PRI + 2);
     thread_start_context(low_thread, low_thread_acquire_lock, &lock);
     thread_start_context(high_thread, high_thread_acquire_lock, &lock);
     
+    // this test will pass if the high priority thread is unblocked - prints PASS
     return 0;
 }
 
 int add_higher_thread_test() {
     int switch_count = get_thread_switch_count();
 
-    struct thread *high_thread = thread_create("sched/high thread", NULL, PRI_MAX);
+    struct thread *high_thread = thread_create("add_higher_thread_test/thread high", NULL, PRI_MAX);
     thread_start_context(high_thread, idle_thread, NULL);
 
     // 2 switches: from testing thread -> high thread and then high thread -> testing thread
@@ -142,7 +143,7 @@ int add_higher_thread_test() {
 int lower_thread_priority_should_yield() {
     int switch_count = get_thread_switch_count();
 
-    struct thread *high_thread = thread_create("sched/high thread", NULL, PRI_MAX);
+    struct thread *high_thread = thread_create("lower_thread_priority/thread high", NULL, PRI_MAX);
     thread_start_context(high_thread, thread_lower_its_priority, NULL);
 
     // assert the originally high_thread did not finish running
@@ -157,7 +158,7 @@ int lower_thread_priority_should_yield() {
 }
 
 int get_set_priority_test() {
-    struct thread *t = thread_create("sched/testing thread", NULL, DEFAULT_PRI);
+    struct thread *t = thread_create("get_set_priority_test/thread test", NULL, DEFAULT_PRI);
     thread_start_context(t, idle_thread, NULL);
 
     int desired_priority = PRI_MAX - 1;
