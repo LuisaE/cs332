@@ -12,6 +12,7 @@ struct spinlock {
     uint8_t type;
     uint8_t lock_status;
     struct thread *holder;
+    bool is_donation;
 };
 
 /* Condition variable */

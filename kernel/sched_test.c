@@ -68,12 +68,15 @@ int simple_priority_sched_test() {
     struct file *f;
 
     // ASK Aaron!
-    fs_open_file("/", FS_RDWR, 0, &f);
+    // continue working on this
+    fs_open_file("/file.txt", FS_RDWR | FS_CREAT, 0, &f);
     kprintf("file size before: %d\n", f->f_inode->i_size);
     // kprintf("In test: %d\n", __LINE__);
 
     thread_start_context(high_thread, write_to_file_thread, (void *) f);
-    for (int i = 0; i < 500000000; i++) { }
+    // for (int i = 0; i < 500000000; i++) { }
+
+    // Aaron? How do we make sure it starts the thread_start_context? block
     kprintf("file size after: %d\n", f->f_inode->i_size);
     // kprintf("In test: %d\n", __LINE__);
 

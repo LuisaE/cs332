@@ -27,7 +27,6 @@ void
 spinlock_acquire(struct spinlock* lock)
 {
     // TODO: change this for priority donation
-    // check if lock->holder->priority < current thread priority, donation
     // mark current thread as waiting for this lock to get the priority back
 
     if (!synch_enabled) {
@@ -35,11 +34,24 @@ spinlock_acquire(struct spinlock* lock)
     }
     kassert(lock);
     intr_set_level(INTR_OFF);
-    // can't grab the same lock again
+
     struct thread *curr = thread_current();
+
+     // can't grab the same lock again
     if (lock->holder != NULL && lock->holder == curr) {
         panic("lock holder trying to grab the same lock again");
     }
+
+    if (lock->holder && lock->holder->priority < curr->priority) {
+        // AARON 1
+        // Has to perform donation: H to L
+        kprintf("Random\n");
+        // lock->is_donation = 1;
+        // thread_set_priority_t(curr->priority, lock->holder);
+        // Cannot do this: 
+        // lock->holder->priority = curr->priority;
+    }
+
     kassert(lock->holder == NULL || lock->holder != curr);
 
     while (lock->lock_status || __sync_lock_test_and_set(&lock->lock_status, 1) != 0);

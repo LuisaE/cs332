@@ -788,6 +788,8 @@ get_data_block(struct inode *inode, offset_t ofs, struct blk_header **bh, int al
         bdev_release_blk(indir_bh);
     }
 
+
+    kprintf("In get_data_block: %d\n", __LINE__);
     kassert(blk > 0);
     // Now read the data block.
     if ((*bh = bdev_get_blk(inode->sb->bdev, blk)) == NULL) {
