@@ -128,7 +128,9 @@ void thread_set_priority (int priority, struct thread *t) {
     return;
 }
 
-int thread_get_priority () {
-    // TODO: check donation
-    return thread_current()->priority;
+int thread_get_priority (struct thread *t) {
+    if (!t) {
+        return thread_current()->priority;
+    } 
+    return t->priority;
 }

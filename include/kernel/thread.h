@@ -60,7 +60,7 @@ void thread_start_context(struct thread *t, thread_func func, void *aux);
 void thread_set_priority (int priority, struct thread *t);
 
 /* Returns thread.priority or if it is a priority donation, return max donated priority. */
-int thread_get_priority (void);
+int thread_get_priority (struct thread *t);
 
 // void* thread_get_context(struct thread *t);
 /* Debug function */

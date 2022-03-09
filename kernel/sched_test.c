@@ -67,8 +67,9 @@ int simple_priority_sched_test() {
 
     struct file *f;
 
-    // ASK Aaron!
+    // ? ASK Aaron
     // continue working on this
+    // ! STUCK HERE
     fs_open_file("/file.txt", FS_RDWR | FS_CREAT, 0, &f);
     kprintf("file size before: %d\n", f->f_inode->i_size);
     // kprintf("In test: %d\n", __LINE__);
@@ -112,6 +113,8 @@ int tie_priority_sched_test() {
 
 int inversion_priority_sched_test() {
 
+    // kprintf("Got into inversion test \n");
+
     struct spinlock lock;
     spinlock_init(&lock);
 
@@ -139,6 +142,7 @@ int add_higher_thread_test() {
     kassert(switch_count + 2 == switch_after);
 
     kprintf("PASS: add_higher_thread_test\n");
+    kassert(high_thread->state == ZOMBIE);
     return 0;
 }
 
@@ -157,6 +161,9 @@ int lower_thread_priority_should_yield() {
     kassert(switch_count + 2 == switch_after);
     
     kprintf("PASS: lower_thread_priority_should_yield\n");
+    // make sure it doesn't interfere other threads
+    thread_set_priority(PRI_MAX, high_thread);
+    kassert(high_thread->state == ZOMBIE);
     return 0;
 }
 
@@ -165,9 +172,11 @@ int get_set_priority_test() {
     thread_start_context(t, idle_thread, NULL);
 
     int desired_priority = PRI_MAX - 1;
-    thread_set_priority(desired_priority, NULL);
-    kassert(desired_priority == thread_get_priority());
+    thread_set_priority(desired_priority, t);
+    kassert(desired_priority == thread_get_priority(t));
 
     kprintf("PASS: get_set_priority_test\n");
+    kassert(t->state == ZOMBIE);
+    
     return 0;
 }

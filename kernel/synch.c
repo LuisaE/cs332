@@ -44,10 +44,13 @@ spinlock_acquire(struct spinlock* lock)
 
     if (lock->holder && lock->holder->priority < curr->priority) {
         // Has to perform donation: H to L
+        // kprintf("priority inversion case \n");
         lock->is_donation = 1;
-        thread_set_priority(curr->priority, lock->holder);
-        // Cannot do this: 
-        // lock->holder->priority = curr->priority;
+        lock->donor = curr;
+        int donor_priority = curr->priority;
+        curr->priority = DEFAULT_PRI;
+        thread_set_priority(donor_priority, lock->holder);
+        
     }
 
     kassert(lock->holder == NULL || lock->holder != curr);
@@ -90,6 +93,15 @@ spinlock_release(struct spinlock* lock)
         return;
     }
     kassert(lock);
+
+    // return priority to the high thread
+    if (lock->is_donation == 1) {
+        // kprintf("In lock release of donation case \n");
+        lock->is_donation = 0;
+        thread_set_priority(lock->holder->priority, lock->donor);
+        lock->holder->priority = DEFAULT_PRI;
+    }
+
     lock->holder = NULL;
     // Tell the C compiler and the CPU to not move loads or stores
     // past this point, to ensure that all the stores in the critical
