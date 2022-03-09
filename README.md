@@ -9,11 +9,10 @@ David Chu and Luisa Escosteguy
     - New threads are scheduled based on priority
     - If a thread is added to the ready list and has the highest priority, it starts running immediately
     - If the highest priority thread (currently running) priority is lowered and there is a thread with higher priority, it yields 
-    - TODO: Simple priority donation
+    - Simple priority donation
 
 ## Any non-functional features you attempted to implement
 
-- Priority donation
 - Ties
 
 ## The files you added or modified, and how they relate to the features above
