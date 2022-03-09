@@ -57,10 +57,7 @@ struct thread* thread_idle();
 void thread_start_context(struct thread *t, thread_func func, void *aux); 
 
 /* Set current thread priority and check if the thread still has the highest priority, if not, yields */
-void thread_set_priority (int priority);
-
-/* Set current thread priority and check if the thread still has the highest priority, if not, yields */
-void thread_set_priority_t (int priority, struct thread *t);
+void thread_set_priority (int priority, struct thread *t);
 
 /* Returns thread.priority or if it is a priority donation, return max donated priority. */
 int thread_get_priority (void);

@@ -43,11 +43,9 @@ spinlock_acquire(struct spinlock* lock)
     }
 
     if (lock->holder && lock->holder->priority < curr->priority) {
-        // AARON 1
         // Has to perform donation: H to L
-        kprintf("Random\n");
-        // lock->is_donation = 1;
-        // thread_set_priority_t(curr->priority, lock->holder);
+        lock->is_donation = 1;
+        thread_set_priority(curr->priority, lock->holder);
         // Cannot do this: 
         // lock->holder->priority = curr->priority;
     }

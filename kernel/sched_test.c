@@ -24,7 +24,7 @@ int idle_thread(void *args) {
 
 int thread_lower_its_priority(void *args) {
     for (int i = 0; i < 5000; i++) { }
-    thread_set_priority(PRI_MIN);
+    thread_set_priority(PRI_MIN, NULL);
     for (int i = 0; i < 5000; i++) { }
     return 0;
 }
@@ -43,7 +43,7 @@ int write_to_file_thread(void *f) {
 
 int low_thread_acquire_lock(void *lock) {
     spinlock_acquire((struct spinlock*) lock);
-    thread_set_priority(DEFAULT_PRI-1);
+    thread_set_priority(DEFAULT_PRI-1, NULL);
     for (int i = 0; i < 500000; i++) { }
     spinlock_release((struct spinlock*) lock);
     return 0;
@@ -165,7 +165,7 @@ int get_set_priority_test() {
     thread_start_context(t, idle_thread, NULL);
 
     int desired_priority = PRI_MAX - 1;
-    thread_set_priority(desired_priority);
+    thread_set_priority(desired_priority, NULL);
     kassert(desired_priority == thread_get_priority());
 
     kprintf("PASS: get_set_priority_test\n");

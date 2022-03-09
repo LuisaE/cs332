@@ -114,22 +114,16 @@ thread_kstart(thread_func func, void *aux)
     panic("thread_exit should not return");
 }
 
-void thread_set_priority (int priority) {
+void thread_set_priority (int priority, struct thread *t) {
 
     if (priority < PRI_MIN || priority > PRI_MAX) {
         return;
     }
-    thread_current()->priority = priority;
-    yield(READY, NULL); // Ask Aaron about lock: when and how to pass
-    return;
-}
-
-void thread_set_priority_t (int priority, struct thread *t) {
-
-    if (priority < PRI_MIN || priority > PRI_MAX) {
-        return;
+    if (!t) {
+        thread_current()->priority = priority;
+    } else {
+        t->priority = priority;
     }
-    t->priority = priority;
     yield(READY, NULL); // Ask Aaron about lock: when and how to pass
     return;
 }
