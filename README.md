@@ -45,6 +45,7 @@ To run the tests, run `TEST=true make qemu` and note the print statements. We ar
 running and then lower its own priority - it should yield to the other threads (running to ready)
 and other thread should take over. 
 - get_set_priority_test: test if the priority of a thread is correctly set
+- set_invalid_priority_test: should not set priority if out of bounds
 
 ## Features or edge cases the test cases do not address
 

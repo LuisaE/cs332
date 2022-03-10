@@ -115,8 +115,8 @@ thread_kstart(thread_func func, void *aux)
 }
 
 void thread_set_priority (int priority, struct thread *t) {
-
     if (priority < PRI_MIN || priority > PRI_MAX) {
+        // invalid priority
         return;
     }
     if (!t) {
@@ -124,7 +124,8 @@ void thread_set_priority (int priority, struct thread *t) {
     } else {
         t->priority = priority;
     }
-    yield(READY, NULL); // Ask Aaron about lock: when and how to pass
+
+    yield(READY, NULL);
     return;
 }
 

@@ -26,3 +26,5 @@ int add_higher_thread_test();
 int get_set_priority_test();
 
 int lower_thread_priority_should_yield();
+
+int set_invalid_priority_test();

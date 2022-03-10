@@ -83,9 +83,7 @@ sched_sched(threadstate_t next_state, void* lock)
 {
     struct thread *curr = thread_current();
     spinlock_acquire(&sched_lock);
-    // kprintf("sched_shed %d\n", __LINE__);
-    // ASK AARON for sure if whenever we call sched_sched, we 
-    // want the current thread to stop running regarless of its priority
+    
     if (next_state == READY && curr != cpu_idle_thread(mycpu())) {
         list_append(ready_queue, &curr->node);
     }

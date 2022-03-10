@@ -32,6 +32,7 @@ kernel_init(void *args)
     add_higher_thread_test();
     lower_thread_priority_should_yield();
     inversion_priority_sched_test();
+    set_invalid_priority_test();
 
     // Work in progress
     simple_priority_sched_test();

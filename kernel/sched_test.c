@@ -168,3 +168,21 @@ int get_set_priority_test() {
     
     return 0;
 }
+
+int set_invalid_priority_test() {
+    struct thread *t = thread_create("set_invalid_priority_test/thread test", NULL, DEFAULT_PRI + 1);
+    thread_start_context(t, idle_thread, NULL);
+
+    int desired_priority = PRI_MAX + 1;
+    thread_set_priority(desired_priority, t);
+    kassert(desired_priority != thread_get_priority(t));
+
+    desired_priority = PRI_MIN - 1;
+    thread_set_priority(desired_priority, t);
+    kassert(desired_priority != thread_get_priority(t));
+
+    kprintf("PASS: set_invalid_priority_test\n");
+    kassert(t->state == ZOMBIE);
+    
+    return 0;
+}
