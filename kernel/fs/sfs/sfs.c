@@ -720,7 +720,6 @@ get_data_block(struct inode *inode, offset_t ofs, struct blk_header **bh, int al
         return ERR_NOMEM;
     }
 
-    kprintf("In get_data_block: %d\n", __LINE__);
     blk_index = ofs / BDEV_BLK_SIZE;
     if (blk_index < SFS_NDIRECT) {
         // Direct block
@@ -789,7 +788,6 @@ get_data_block(struct inode *inode, offset_t ofs, struct blk_header **bh, int al
     }
 
 
-    kprintf("In get_data_block: %d\n", __LINE__);
     kassert(blk > 0);
     // Now read the data block.
     if ((*bh = bdev_get_blk(inode->sb->bdev, blk)) == NULL) {
@@ -820,18 +818,13 @@ read_data(struct inode *inode, void *buf, size_t count, offset_t ofs)
     uint8_t *dst_buf, *blk_buf;
 
     dst_buf = (uint8_t*)buf;
-    kprintf("In read_data: %d\n", __LINE__);
     for (total = 0; total < count && ofs < inode->i_size; ofs += s, dst_buf += s, total += s) {
         // Do not allocate new data block here
-        kprintf("In read_data: %d\n", __LINE__);
         if (get_data_block(inode, ofs, &bh, False) != ERR_OK) {
-            kprintf("In read_data: %d\n", __LINE__);
             break;
         }
-        kprintf("In read_data: %d\n", __LINE__);
         blk_buf = (uint8_t*)bh->data;
         s = min(min(BDEV_BLK_SIZE - ofs % BDEV_BLK_SIZE, count - total), inode->i_size - ofs);
-        kprintf("In read_data: %d\n", __LINE__);
         memmove(dst_buf, blk_buf + (ofs % BDEV_BLK_SIZE), s);
         bdev_release_blk(bh);
     }
@@ -1200,7 +1193,6 @@ sfs_read(struct file *file, void *buf, size_t count, offset_t *ofs)
     ssize_t rs;
 
     sleeplock_acquire(&file->f_inode->i_lock);
-    kprintf("In sfs_read: %d\n", __LINE__);
     if ((rs = read_data(file->f_inode, buf, count, *ofs)) > 0) {
         *ofs += rs;
     }

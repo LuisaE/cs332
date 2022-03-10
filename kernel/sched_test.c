@@ -31,10 +31,9 @@ int thread_lower_its_priority(void *args) {
 
 int write_to_file_thread(void *f) {
     kprintf("In write_to_file_thread: %d\n", __LINE__);
-    char *buf = "A";
+    char *buf = "B";
     offset_t offset = 0;
-    for (int i = 0; i < 100; i++) {
-        kprintf("In write_to_file_thread: %d\n", __LINE__);
+    for (int i = 0; i < 10; i++) {
         fs_write_file((struct file *)f, (void *) buf, 1, &offset);
     }
     kprintf("In write_to_file_thread: %d\n", __LINE__);
@@ -62,32 +61,20 @@ int high_thread_acquire_lock(void *lock) {
 int simple_priority_sched_test() {
 
     struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
-    struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
-    struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
+    // struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
+    // struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
 
     struct file *f;
 
     // ? ASK Aaron
-    // continue working on this
     // ! STUCK HERE
-    fs_open_file("/file.txt", FS_RDWR | FS_CREAT, 0, &f);
-    kprintf("file size before: %d\n", f->f_inode->i_size);
-    // kprintf("In test: %d\n", __LINE__);
+    fs_open_file("/README", FS_RDWR, 0, &f);
 
     thread_start_context(high_thread, write_to_file_thread, (void *) f);
-    // for (int i = 0; i < 500000000; i++) { }
-
-    // Aaron? How do we make sure it starts the thread_start_context? block
-    kprintf("file size after: %d\n", f->f_inode->i_size);
-    // kprintf("In test: %d\n", __LINE__);
 
     char *read = kmalloc(101);
     offset_t offset = 0;
 
-    // kprintf("file size: %d\n", f->f_inode->i_size);
-    kprintf("In test: %d\n", __LINE__);
-
-    // ISSUE MIGHT BE HERE?
     fs_read_file(f, (void *) read, 1, &offset);
 
     kprintf("In test: %d\n", __LINE__);
@@ -95,8 +82,8 @@ int simple_priority_sched_test() {
     kprintf("%s\n", read);
 
     kprintf("In test: %d\n", __LINE__);
-    thread_start_context(medium_thread, idle_thread, NULL);
-    thread_start_context(low_thread, idle_thread, NULL);
+    //thread_start_context(medium_thread, idle_thread, NULL);
+    //thread_start_context(low_thread, idle_thread, NULL);
 
     //open file and check if 100 A, 100 B, 100 C
     
@@ -112,9 +99,6 @@ int tie_priority_sched_test() {
 }
 
 int inversion_priority_sched_test() {
-
-    // kprintf("Got into inversion test \n");
-
     struct spinlock lock;
     spinlock_init(&lock);
 
