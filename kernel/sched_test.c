@@ -49,12 +49,11 @@ int high_thread_acquire_lock(void *lock) {
 }
 
 int write_to_file_thread(void *f) {
-    kprintf("In write_to_file_thread: %d\n", __LINE__);
-    char *buf = "B";
+     // ! STUCK HERE
+    // kprintf("In write_to_file_thread: %d\n", __LINE__);
+    char buf[5] = "BBBBB";
     offset_t offset = 0;
-    for (int i = 0; i < 10; i++) {
-        fs_write_file((struct file *)f, (void *) buf, 1, &offset);
-    }
+    fs_write_file((struct file *)f, (void *) buf, 5, &offset);
     kprintf("In write_to_file_thread: %d\n", __LINE__);
     return 0;
 }
@@ -69,14 +68,23 @@ int simple_priority_sched_test() {
 
     struct file *f;
 
-    // ? ASK Aaron
-    // ! STUCK HERE
-    fs_open_file("/README", FS_RDWR, 0, &f);
+    fs_open_file("/test.txt", FS_RDWR, FMODE_R | FMODE_W, &f);
+    char buf[5] = "BBBBB";
+    offset_t offset = 0;
+    kprintf("In simple_priority_sched_test: %d\n", __LINE__);
+    fs_write_file((struct file *)f, (void *) buf, 5, &offset);
+    kprintf("In simple_priority_sched_test: %d\n", __LINE__);
 
+    // fs_open_file((char*)"/test", FS_RDWR, FMODE_W, &f);
+    
+    // struct super_block *sb = f->f_inode->sb;
+    // if (sb) {}
+
+    // ! STUCK HERE
     thread_start_context(high_thread, write_to_file_thread, (void *) f);
 
     char *read = kmalloc(101);
-    offset_t offset = 0;
+    // offset_t offset = 0;
 
     fs_read_file(f, (void *) read, 1, &offset);
 

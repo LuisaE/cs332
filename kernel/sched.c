@@ -187,6 +187,7 @@ struct thread* get_max_priority_thread() {
             max_priority = t->priority;
         }
     }
+    
     return max_priority_thread;
 }
 
