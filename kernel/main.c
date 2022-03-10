@@ -27,15 +27,15 @@ kernel_init(void *args)
 #ifdef SCHED_TEST
     kprintf("\nScheduling test mode\n");
     kprintf("\n ------ FINAL PROJECT TESTS ----- \n");
-    //simple_priority_sched_test();
-    //tie_priority_sched_test();
-    //inversion_priority_sched_test();
-    //add_higher_thread_test();
+    // All those tests pass
     get_set_priority_test();
     add_higher_thread_test();
     lower_thread_priority_should_yield();
     inversion_priority_sched_test();
+
+    // Work in progress
     simple_priority_sched_test();
+    // tie_priority_sched_test();
     return 0;
 #endif
     // spawn initial process - init

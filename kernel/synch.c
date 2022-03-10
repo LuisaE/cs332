@@ -26,9 +26,6 @@ spinlock_init(struct spinlock* lock)
 void
 spinlock_acquire(struct spinlock* lock)
 {
-    // TODO: change this for priority donation
-    // mark current thread as waiting for this lock to get the priority back
-
     if (!synch_enabled) {
         return;
     }
@@ -44,7 +41,7 @@ spinlock_acquire(struct spinlock* lock)
 
     if (lock->holder && lock->holder->priority < curr->priority) {
         // Has to perform donation: H to L
-        // kprintf("priority inversion case \n");
+        // mark current lock as donation for the high thread to get the priority back in relase
         lock->is_donation = 1;
         lock->donor = curr;
         int donor_priority = curr->priority;
@@ -88,15 +85,13 @@ spinlock_try_acquire(struct spinlock* lock)
 void
 spinlock_release(struct spinlock* lock)
 {
-    // TODO: change for priority donation, awake donated thread. Has to have boolean? 
     if (!synch_enabled) {
         return;
     }
     kassert(lock);
 
-    // return priority to the high thread
     if (lock->is_donation == 1) {
-        // kprintf("In lock release of donation case \n");
+        // return priority to the high thread
         lock->is_donation = 0;
         thread_set_priority(lock->holder->priority, lock->donor);
         lock->holder->priority = DEFAULT_PRI;

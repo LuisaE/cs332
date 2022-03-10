@@ -29,6 +29,25 @@ int thread_lower_its_priority(void *args) {
     return 0;
 }
 
+int low_thread_acquire_lock(void *lock) {
+    spinlock_acquire((struct spinlock*) lock);
+
+    thread_set_priority(DEFAULT_PRI-1, NULL);
+    for (int i = 0; i < 500000; i++) { }
+
+    spinlock_release((struct spinlock*) lock);
+    return 0;
+}
+
+int high_thread_acquire_lock(void *lock) {
+    spinlock_acquire((struct spinlock*) lock);
+    for (int i = 0; i < 5000; i++) { }
+    spinlock_release((struct spinlock*) lock);
+
+    kprintf("PASS: inversion_priority_sched_test\n");
+    return 0;
+}
+
 int write_to_file_thread(void *f) {
     kprintf("In write_to_file_thread: %d\n", __LINE__);
     char *buf = "B";
@@ -40,29 +59,13 @@ int write_to_file_thread(void *f) {
     return 0;
 }
 
-int low_thread_acquire_lock(void *lock) {
-    spinlock_acquire((struct spinlock*) lock);
-    thread_set_priority(DEFAULT_PRI-1, NULL);
-    for (int i = 0; i < 500000; i++) { }
-    spinlock_release((struct spinlock*) lock);
-    return 0;
-}
-
-int high_thread_acquire_lock(void *lock) {
-    spinlock_acquire((struct spinlock*) lock);
-    for (int i = 0; i < 5000; i++) { }
-    spinlock_release((struct spinlock*) lock);
-    kprintf("PASS: inversion_priority_sched_test\n");
-    return 0;
-}
-
 // Testing functions
 
 int simple_priority_sched_test() {
 
     struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
-    // struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
-    // struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
+    struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
+    struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
 
     struct file *f;
 
@@ -82,8 +85,8 @@ int simple_priority_sched_test() {
     kprintf("%s\n", read);
 
     kprintf("In test: %d\n", __LINE__);
-    //thread_start_context(medium_thread, idle_thread, NULL);
-    //thread_start_context(low_thread, idle_thread, NULL);
+    thread_start_context(medium_thread, idle_thread, NULL);
+    thread_start_context(low_thread, idle_thread, NULL);
 
     //open file and check if 100 A, 100 B, 100 C
     
@@ -145,6 +148,7 @@ int lower_thread_priority_should_yield() {
     kassert(switch_count + 2 == switch_after);
     
     kprintf("PASS: lower_thread_priority_should_yield\n");
+
     // make sure it doesn't interfere other threads
     thread_set_priority(PRI_MAX, high_thread);
     kassert(high_thread->state == ZOMBIE);

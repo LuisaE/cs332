@@ -24,7 +24,7 @@ Priority implementation:
 - sched.h: added header for yield and get_max_priority_thread helper function
 - sched.c: implemented yield, changed sched_ready and sched to take priority into consideration
         and added get_max_priority_thread helper 
-- synch.c: TODO changed spinlock_acquire and spinlock_release to support priority donation
+- synch.c: changed spinlock_acquire and spinlock_release to support priority donation
 
 Testing related:
 
