@@ -789,18 +789,13 @@ fs_write_file(struct file *file, const void *buf, size_t count, offset_t *ofs)
     struct super_block *sb;
     ssize_t ws = 0;
 
-    kprintf("In fs_write_file: %d\n", __LINE__);
     if (file->f_inode) {
-        kprintf("In fs_write_file pointer: %p\n", file->f_inode->sb);
         sb = file->f_inode->sb;
-        kprintf("In fs_write_file: %d\n", __LINE__);
         sb->s_ops->journal_begin_txn(sb);
     }
-    kprintf("In fs_write_file: %d\n", __LINE__);
     if (file->oflag != FS_RDONLY) {
         ws = file->f_ops->write(file, buf, count, ofs);
     }
-    kprintf("In fs_write_file: %d\n", __LINE__);
     if (file->f_inode) {
         sb->s_ops->journal_end_txn(sb);
     }

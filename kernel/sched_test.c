@@ -49,11 +49,11 @@ int high_thread_acquire_lock(void *lock) {
 }
 
 int write_to_file_thread(void *f) {
-     // ! STUCK HERE
-    // kprintf("In write_to_file_thread: %d\n", __LINE__);
-    char buf[5] = "BBBBB";
+    // Pointer not allocated, then issue when call fs write
+    kprintf("In write_to_file_thread: %d\n", __LINE__);
+    char *buf = "BBB";
     offset_t offset = 0;
-    fs_write_file((struct file *)f, (void *) buf, 5, &offset);
+    fs_write_file((struct file *) f, buf, 3, &offset);
     kprintf("In write_to_file_thread: %d\n", __LINE__);
     return 0;
 }
@@ -62,39 +62,30 @@ int write_to_file_thread(void *f) {
 
 int simple_priority_sched_test() {
 
-    struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
-    struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
-    struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
+    //struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
+    // struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
+    // struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
 
     struct file *f;
 
-    fs_open_file("/test.txt", FS_RDWR, FMODE_R | FMODE_W, &f);
-    char buf[5] = "BBBBB";
+    fs_open_file("/test.txt", FS_RDWR | FS_CREAT, FMODE_R | FMODE_W, &f);
+
+    kprintf("pointer to file: %x\n", f);
+    //thread_start_context(high_thread, write_to_file_thread, f);
+    kprintf("In write_to_file_thread: %d\n", __LINE__);
+    char *buf = "BBB";
     offset_t offset = 0;
-    kprintf("In simple_priority_sched_test: %d\n", __LINE__);
-    fs_write_file((struct file *)f, (void *) buf, 5, &offset);
-    kprintf("In simple_priority_sched_test: %d\n", __LINE__);
+    fs_write_file((struct file *) f, buf, 3, &offset);
+    kprintf("In write_to_file_thread: %d\n", __LINE__);
 
-    // fs_open_file((char*)"/test", FS_RDWR, FMODE_W, &f);
-    
-    // struct super_block *sb = f->f_inode->sb;
-    // if (sb) {}
-
-    // ! STUCK HERE
-    thread_start_context(high_thread, write_to_file_thread, (void *) f);
-
-    char *read = kmalloc(101);
-    // offset_t offset = 0;
-
-    fs_read_file(f, (void *) read, 1, &offset);
-
-    kprintf("In test: %d\n", __LINE__);
+    char read[3];
+    offset = 0;
+    fs_read_file(f, read, 3, &offset);
 
     kprintf("%s\n", read);
 
-    kprintf("In test: %d\n", __LINE__);
-    thread_start_context(medium_thread, idle_thread, NULL);
-    thread_start_context(low_thread, idle_thread, NULL);
+    // thread_start_context(medium_thread, idle_thread, NULL);
+    // thread_start_context(low_thread, idle_thread, NULL);
 
     //open file and check if 100 A, 100 B, 100 C
     
