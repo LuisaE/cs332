@@ -37,7 +37,7 @@ Testing related:
 
 To run the tests, run `TEST=true make qemu` and note the print statements. We are running qemu with 1 CPU to facilitate testing. 
 
-- tie_priority_sched_test: TODO - several threads with the same priority should take turns to run
+- tie_priority_sched_test: several threads with the same priority should take turns to run
 - simple_priority_sched_test: verifies that the three threads with high, medium and low priority finish running in order. 
 - inversion_priority_sched_test: high priority thread (H) needs a lock acquired by low priority thread (L), so it donates its priority to L while L is holding the lock. When L releases the lock, H should continue running. 
 - add_higher_thread_test: add a thread with higher priority to the ready list - it should start running
@@ -49,10 +49,12 @@ and other thread should take over.
 
 ## Features or edge cases the test cases do not address
 
-- Work in progress: ties. 
+- We test every case for every features that we succesfully implemented 
 
 ## Known bugs
 
 None that we know.
 
 ## Anything interesting you would like to share
+
+Thanks for all the help this term and the previous terms! It's been fun! Hope you enjoy life after Carleton! We'll miss u :)
