@@ -58,6 +58,13 @@ int write_to_file_thread(void *f) {
     return 0;
 }
 
+int write_to_file_thread_alt(void *f) {
+    char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+    offset_t offset = 0;
+    fs_write_file((struct file *) f, buf, 32, &offset);
+    return 0;
+}
+
 int read_file_and_write(void *f) {
     char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
@@ -114,10 +121,33 @@ int simple_priority_sched_test() {
 }
 
 int tie_priority_sched_test() {
-    // struct thread *high_thread = thread_create("tie_priority/thread high", proc_current(), DEFAULT_PRI + 5);
-    // struct thread *medium_thread = thread_create("tie_priority/thread medium", proc_current(), DEFAULT_PRI + 5);
+   
+    struct thread *thread_a = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 1);
+    struct thread *thread_b = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 1);
     
-    kprintf("TODO - (FAKE) PASS: tie_priority_sched_test\n");
+    struct file *f;
+    // create a file with read and write permissions
+    fs_open_file("/test_tie.txt", FS_RDWR | FS_CREAT, FMODE_R | FMODE_W, &f);
+
+    // write something to the file
+    char *buf = "*";
+    offset_t offset = 0;
+    fs_write_file((struct file *) f, buf, 1, &offset);
+
+    thread_start_context(thread_a, write_to_file_thread, NULL);
+    thread_start_context(thread_b, write_to_file_thread_alt, NULL);
+
+    char *read = kmalloc(64);
+    offset = 0;
+    fs_read_file(f, read, BUFF_SIZE, &offset);
+    
+    // Make sure that the string written to file is interleved between A's and B's
+    kassert(strcmp(read, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") != 0);
+    kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") != 0);
+    kassert(sizeof(read) == 64);
+    kfree(read);
+
+    kprintf("PASS: tie_priority_sched_test\n");
     return 0;
 }
 

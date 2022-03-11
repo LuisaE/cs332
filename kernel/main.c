@@ -34,7 +34,6 @@ kernel_init(void *args)
     inversion_priority_sched_test();
     set_invalid_priority_test();
     simple_priority_sched_test();
-    // work in progress
     tie_priority_sched_test();
     return 0;
 #endif
