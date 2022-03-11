@@ -13,7 +13,7 @@ David Chu and Luisa Escosteguy
 
 ## Any non-functional features you attempted to implement
 
-- Ties
+- Ties, but there is a test for it
 
 ## The files you added or modified, and how they relate to the features above
 
@@ -53,7 +53,7 @@ and other thread should take over.
 
 ## Known bugs
 
-None that we know.
+- CHECK - simple_priority_sched_test: sometimes it does not pass as it triggers priority donation when thread_start_context -> sched_ready 
 
 ## Anything interesting you would like to share
 
