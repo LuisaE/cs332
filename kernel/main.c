@@ -33,10 +33,9 @@ kernel_init(void *args)
     lower_thread_priority_should_yield();
     inversion_priority_sched_test();
     set_invalid_priority_test();
-
-    // Work in progress
     simple_priority_sched_test();
-    // tie_priority_sched_test();
+    // work in progress
+    tie_priority_sched_test();
     return 0;
 #endif
     // spawn initial process - init

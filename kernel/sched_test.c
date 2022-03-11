@@ -18,6 +18,8 @@
 
 // Helper funtions 
 
+#define BUFF_SIZE 32
+
 int idle_thread(void *args) {
     for (int i = 0; i < 1000; i++) { }
     return 0;
@@ -57,25 +59,24 @@ int write_to_file_thread(void *f) {
 }
 
 int read_file_and_write(void *f) {
-    char *read = kmalloc(32);
+    char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
-    fs_read_file(f, read, 32, &offset);
+    fs_read_file(f, read, BUFF_SIZE, &offset);
     
     kassert(strcmp(read, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") == 0);
     kfree(read);
 
     char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
     offset = 0;
-    fs_write_file((struct file *) f, buf, 32, &offset);
+    fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
 
     return 0;
 }
 
 int read_file(void *f) {
-    char *read = kmalloc(32);
+    char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
-    fs_read_file(f, read, 32, &offset);
-    kprintf("%s\n", read);
+    fs_read_file(f, read, BUFF_SIZE, &offset);
     
     kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") == 0);
     kfree(read);
@@ -113,8 +114,10 @@ int simple_priority_sched_test() {
 }
 
 int tie_priority_sched_test() {
-    // do the same as in simple, but letters should be interleaved - never 100 A, then 100 B ...
-    kprintf("PASS: tie_priority_sched_test\n");
+    // struct thread *high_thread = thread_create("tie_priority/thread high", proc_current(), DEFAULT_PRI + 5);
+    // struct thread *medium_thread = thread_create("tie_priority/thread medium", proc_current(), DEFAULT_PRI + 5);
+    
+    kprintf("TODO - (FAKE) PASS: tie_priority_sched_test\n");
     return 0;
 }
 
@@ -190,10 +193,12 @@ int set_invalid_priority_test() {
     struct thread *t = thread_create("set_invalid_priority_test/thread test", NULL, DEFAULT_PRI + 1);
     thread_start_context(t, idle_thread, NULL);
 
+    // try to set a priority more than max
     int desired_priority = PRI_MAX + 1;
     thread_set_priority(desired_priority, t);
     kassert(desired_priority != thread_get_priority(t));
 
+    // try to set a priority less than min
     desired_priority = PRI_MIN - 1;
     thread_set_priority(desired_priority, t);
     kassert(desired_priority != thread_get_priority(t));
