@@ -13,6 +13,7 @@
 #include <kernel/pmem.h>
 #include <lib/errcode.h>
 #include <kernel/sched_test.h>
+#include <lib/string.h>
 
 
 // Helper funtions 
@@ -49,45 +50,62 @@ int high_thread_acquire_lock(void *lock) {
 }
 
 int write_to_file_thread(void *f) {
-    // Pointer not allocated, then issue when call fs write
-    kprintf("In write_to_file_thread: %d\n", __LINE__);
-    char *buf = "BBB";
+    char *buf = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     offset_t offset = 0;
-    fs_write_file((struct file *) f, buf, 3, &offset);
-    kprintf("In write_to_file_thread: %d\n", __LINE__);
+    fs_write_file((struct file *) f, buf, 32, &offset);
+    return 0;
+}
+
+int read_file_and_write(void *f) {
+    char *read = kmalloc(32);
+    offset_t offset = 0;
+    fs_read_file(f, read, 32, &offset);
+    
+    kassert(strcmp(read, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") == 0);
+    kfree(read);
+
+    char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+    offset = 0;
+    fs_write_file((struct file *) f, buf, 32, &offset);
+
+    return 0;
+}
+
+int read_file(void *f) {
+    char *read = kmalloc(32);
+    offset_t offset = 0;
+    fs_read_file(f, read, 32, &offset);
+    kprintf("%s\n", read);
+    
+    kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") == 0);
+    kfree(read);
     return 0;
 }
 
 // Testing functions
 
 int simple_priority_sched_test() {
-
-    //struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 3);
-    // struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 2);
-    // struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 1);
+    // create three threads with different priorities
+    struct thread *high_thread = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 5);
+    struct thread *medium_thread = thread_create("simple_priority/thread medium", proc_current(), DEFAULT_PRI + 3);
+    struct thread *low_thread = thread_create("simple_priority/thread low", proc_current(), DEFAULT_PRI);
 
     struct file *f;
 
+    // create a file with read and write permissions
     fs_open_file("/test.txt", FS_RDWR | FS_CREAT, FMODE_R | FMODE_W, &f);
 
-    kprintf("pointer to file: %x\n", f);
-    //thread_start_context(high_thread, write_to_file_thread, f);
-    kprintf("In write_to_file_thread: %d\n", __LINE__);
-    char *buf = "BBB";
+    // write something to the file
+    char *buf = "*";
     offset_t offset = 0;
-    fs_write_file((struct file *) f, buf, 3, &offset);
-    kprintf("In write_to_file_thread: %d\n", __LINE__);
+    fs_write_file((struct file *) f, buf, 1, &offset);
 
-    char read[3];
-    offset = 0;
-    fs_read_file(f, read, 3, &offset);
-
-    kprintf("%s\n", read);
-
-    // thread_start_context(medium_thread, idle_thread, NULL);
-    // thread_start_context(low_thread, idle_thread, NULL);
-
-    //open file and check if 100 A, 100 B, 100 C
+    // start the threads and verify that high wrote 32s A
+    thread_start_context(high_thread, write_to_file_thread, f);
+    // medium read 32s A and write 32s B 
+    thread_start_context(medium_thread, read_file_and_write, f);
+    // low reads 32s Bs
+    thread_start_context(low_thread, read_file, f);
     
     fs_close_file(f);
     kprintf("PASS: simple_priority_sched_test\n");
