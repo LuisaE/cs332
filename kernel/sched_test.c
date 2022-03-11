@@ -19,16 +19,17 @@
 // Helper funtions 
 
 #define BUFF_SIZE 32
+#define LOOP 5000
 
 int idle_thread(void *args) {
-    for (int i = 0; i < 1000; i++) { }
+    for (int i = 0; i < LOOP; i++) { }
     return 0;
 }
 
 int thread_lower_its_priority(void *args) {
-    for (int i = 0; i < 5000; i++) { }
+    for (int i = 0; i < LOOP; i++) { }
     thread_set_priority(PRI_MIN, NULL);
-    for (int i = 0; i < 5000; i++) { }
+    for (int i = 0; i < LOOP; i++) { }
     return 0;
 }
 
@@ -36,7 +37,7 @@ int low_thread_acquire_lock(void *lock) {
     spinlock_acquire((struct spinlock*) lock);
 
     thread_set_priority(DEFAULT_PRI-1, NULL);
-    for (int i = 0; i < 500000; i++) { }
+    for (int i = 0; i < LOOP; i++) { }
 
     spinlock_release((struct spinlock*) lock);
     return 0;
@@ -44,7 +45,7 @@ int low_thread_acquire_lock(void *lock) {
 
 int high_thread_acquire_lock(void *lock) {
     spinlock_acquire((struct spinlock*) lock);
-    for (int i = 0; i < 5000; i++) { }
+    for (int i = 0; i < LOOP; i++) { }
     spinlock_release((struct spinlock*) lock);
 
     kprintf("PASS: inversion_priority_sched_test\n");
@@ -52,20 +53,23 @@ int high_thread_acquire_lock(void *lock) {
 }
 
 int write_to_file_thread(void *f) {
+    // kprintf("High start\n");
     char *buf = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     offset_t offset = 0;
-    fs_write_file((struct file *) f, buf, 32, &offset);
+    fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
+    // kprintf("High end\n");
     return 0;
 }
 
 int write_to_file_thread_alt(void *f) {
     char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
     offset_t offset = 0;
-    fs_write_file((struct file *) f, buf, 32, &offset);
+    fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
     return 0;
 }
 
 int read_file_and_write(void *f) {
+    // kprintf("Medium start\n");
     char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
     fs_read_file(f, read, BUFF_SIZE, &offset);
@@ -76,17 +80,19 @@ int read_file_and_write(void *f) {
     char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
     offset = 0;
     fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
-
+    // kprintf("Medium end\n");
     return 0;
 }
 
 int read_file(void *f) {
+    // kprintf("Low start\n");
     char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
     fs_read_file(f, read, BUFF_SIZE, &offset);
     
     kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") == 0);
     kfree(read);
+    // kprintf("Low end\n");
     return 0;
 }
 
@@ -94,9 +100,9 @@ int read_file(void *f) {
 
 int simple_priority_sched_test() {
     // create three threads with different priorities
-    struct thread *high_thread = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 5);
-    struct thread *medium_thread = thread_create("simple_priority/thread medium", proc_current(), DEFAULT_PRI + 3);
-    struct thread *low_thread = thread_create("simple_priority/thread low", proc_current(), DEFAULT_PRI);
+    struct thread *high_thread = thread_create("simple_priority/thread high", NULL, DEFAULT_PRI + 15);
+    struct thread *medium_thread = thread_create("simple_priority/thread medium", NULL, DEFAULT_PRI + 10);
+    struct thread *low_thread = thread_create("simple_priority/thread low", NULL, DEFAULT_PRI + 5);
 
     struct file *f;
 
@@ -108,6 +114,7 @@ int simple_priority_sched_test() {
     offset_t offset = 0;
     fs_write_file((struct file *) f, buf, 1, &offset);
 
+    // ! There is some donation happening here when thread_start_context -> sched_ready
     // start the threads and verify that high wrote 32s A
     thread_start_context(high_thread, write_to_file_thread, f);
     // medium read 32s A and write 32s B 
@@ -122,8 +129,8 @@ int simple_priority_sched_test() {
 
 int tie_priority_sched_test() {
    
-    struct thread *thread_a = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 1);
-    struct thread *thread_b = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 1);
+    struct thread *thread_a = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 10);
+    struct thread *thread_b = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 10);
     
     struct file *f;
     // create a file with read and write permissions
@@ -220,8 +227,7 @@ int get_set_priority_test() {
 }
 
 int set_invalid_priority_test() {
-    struct thread *t = thread_create("set_invalid_priority_test/thread test", NULL, DEFAULT_PRI + 1);
-    thread_start_context(t, idle_thread, NULL);
+    struct thread *t = thread_create("set_invalid_priority_test/thread test", NULL, DEFAULT_PRI);
 
     // try to set a priority more than max
     int desired_priority = PRI_MAX + 1;
@@ -234,7 +240,6 @@ int set_invalid_priority_test() {
     kassert(desired_priority != thread_get_priority(t));
 
     kprintf("PASS: set_invalid_priority_test\n");
-    kassert(t->state == ZOMBIE);
     
     return 0;
 }
