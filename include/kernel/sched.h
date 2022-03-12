@@ -35,7 +35,8 @@ void yield(threadstate_t next_state, void* lock);
 /*
 * Return the ready thread with the highest priority 
 */
-struct thread* get_max_priority_thread();
+// struct thread* get_max_priority_thread();
+void get_max_priority_thread();
 
 int get_thread_switch_count();
 

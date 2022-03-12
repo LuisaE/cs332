@@ -28,6 +28,7 @@ struct thread {
     struct trapframe *tf;       // current trapframe of the thread
     Node node;                  // used to track the thread in ready list or other blocking list 
     Node thread_node;           // connect threads belonging to the same process
+    Node tie_node;              // used to get the maximum threads with the same priorities
 };
 
 typedef int thread_func(void *aux);

@@ -7,7 +7,9 @@
 #include <lib/stddef.h>
 
 List _ready_queue;
+List _max_threads;
 List* ready_queue = &_ready_queue;
+List* max_threads = &_max_threads;
 size_t thread_switch_count = 0;
 
 /* 
@@ -112,11 +114,23 @@ sched(void)
     struct thread *prev = NULL;
     struct thread *next = NULL;
 
+    list_init(max_threads);
+    kprintf("check sched 1\n");
+
     if (!list_empty(ready_queue)) {
         // schedule the highest priority thread in the ready queue to run
-        next = get_max_priority_thread();
-        kassert(next->state == READY);
-        list_remove(&next->node);
+        get_max_priority_thread(max_threads);
+        Node *n = list_begin(max_threads);
+        if (list_next(n)) {
+            // if there are multiple threads with max priority -> handle ties
+
+
+        } else {
+            // if there is only one thread with max priority
+            next = (struct thread*) list_entry(n, struct thread, node);
+            kassert(next->state == READY);
+            list_remove(&next->node);
+        }
     } else {
         // if current thread is not the idle thread, schedules to idle thread of the cpu
         struct thread *idle = cpu_idle_thread(cpu);
@@ -176,19 +190,42 @@ void yield(threadstate_t next_state, void* lock) {
     spinlock_release(&sched_lock);
 }
 
-struct thread* get_max_priority_thread() {
+// struct thread* get_max_priority_thread() {
+//     // get the thread with the highest priority from the ready list
+//     struct thread* max_priority_thread = NULL;
+//     int max_priority = -1;
+//     for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
+//         struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+//         if (max_priority < t->priority) {
+//             max_priority_thread = t;
+//             max_priority = t->priority;
+//         }
+//     }
+    
+//     return max_priority_thread;
+// }
+
+void get_max_priority_thread(List* max_threads) {
     // get the thread with the highest priority from the ready list
-    struct thread* max_priority_thread = NULL;
     int max_priority = -1;
+    kprintf("check get_max_priority_thread 1\n");
     for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
         struct thread *t = (struct thread*) list_entry(n, struct thread, node);
         if (max_priority < t->priority) {
-            max_priority_thread = t;
             max_priority = t->priority;
         }
     }
-    
-    return max_priority_thread;
+
+    kprintf("Max priority %d \n", max_priority);
+
+    kprintf("check get_max_priority_thread 2\n");
+    for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
+        struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+        if (max_priority == t->priority) {
+            kprintf("check get_max_priority_thread 3\n");
+            list_append(max_threads, &t->tie_node);
+        }
+    }
 }
 
 int get_thread_switch_count() {
