@@ -55,14 +55,12 @@ int high_thread_acquire_lock(void *lock) {
 
 int write_to_file_thread(void *f) {
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     char *buf = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     offset_t offset = 0;
     fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     return 0;
@@ -77,7 +75,6 @@ int write_to_file_thread_alt(void *f) {
 
 int read_file_and_write(void *f) {
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     char *read = kmalloc(BUFF_SIZE);

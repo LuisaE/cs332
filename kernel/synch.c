@@ -42,7 +42,6 @@ spinlock_acquire(struct spinlock* lock)
     if (lock->holder && lock->holder->priority < curr->priority) {
         // Has to perform donation: H to L
         // mark current lock as donation for the high thread to get the priority back in relase
-        // kprintf("Priority donation need detected\n");
         lock->is_donation = 1;
         lock->donor = curr;
         int donor_priority = curr->priority;
@@ -92,7 +91,6 @@ spinlock_release(struct spinlock* lock)
     int return_priority = NULL;
 
     if (lock->is_donation == 1) {
-        // kprintf("Return donation\n");
         // return priority to the high thread
         lock->is_donation = 0;
         return_priority = lock->holder->priority;
