@@ -19,7 +19,8 @@
 // Helper funtions 
 
 #define BUFF_SIZE 32
-#define LOOP 5000
+#define LOOP 35000
+#define DELAY 1
 
 int idle_thread(void *args) {
     for (int i = 0; i < LOOP; i++) { }
@@ -53,11 +54,17 @@ int high_thread_acquire_lock(void *lock) {
 }
 
 int write_to_file_thread(void *f) {
-    // kprintf("High start\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     char *buf = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     offset_t offset = 0;
     fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
-    // kprintf("High end\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     return 0;
 }
 
@@ -69,7 +76,10 @@ int write_to_file_thread_alt(void *f) {
 }
 
 int read_file_and_write(void *f) {
-    // kprintf("Medium start\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
     fs_read_file(f, read, BUFF_SIZE, &offset);
@@ -80,19 +90,28 @@ int read_file_and_write(void *f) {
     char *buf = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
     offset = 0;
     fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
-    // kprintf("Medium end\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     return 0;
 }
 
 int read_file(void *f) {
-    // kprintf("Low start\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     char *read = kmalloc(BUFF_SIZE);
     offset_t offset = 0;
     fs_read_file(f, read, BUFF_SIZE, &offset);
     
     kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") == 0);
     kfree(read);
-    // kprintf("Low end\n");
+#if DELAY
+    // kprintf("");
+    for (int i = 0; i < LOOP; i++) { }
+#endif
     return 0;
 }
 
