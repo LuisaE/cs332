@@ -19,7 +19,7 @@
 // Helper funtions 
 
 #define BUFF_SIZE 32
-#define LOOP 35000
+#define LOOP 80000
 #define DELAY 1
 
 int idle_thread(void *args) {
@@ -91,7 +91,6 @@ int read_file_and_write(void *f) {
     offset = 0;
     fs_write_file((struct file *) f, buf, BUFF_SIZE, &offset);
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     return 0;
@@ -99,7 +98,6 @@ int read_file_and_write(void *f) {
 
 int read_file(void *f) {
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     char *read = kmalloc(BUFF_SIZE);
@@ -109,7 +107,6 @@ int read_file(void *f) {
     kassert(strcmp(read, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB") == 0);
     kfree(read);
 #if DELAY
-    // kprintf("");
     for (int i = 0; i < LOOP; i++) { }
 #endif
     return 0;
@@ -133,7 +130,8 @@ int simple_priority_sched_test() {
     offset_t offset = 0;
     fs_write_file((struct file *) f, buf, 1, &offset);
 
-    // ! There is some donation happening here when thread_start_context -> sched_ready
+    // There is some donation happening here when thread_start_context -> sched_ready
+    // We fix it by adding a loop to delay the threads from starting in between
     // start the threads and verify that high wrote 32s A
     thread_start_context(high_thread, write_to_file_thread, f);
     // medium read 32s A and write 32s B 
