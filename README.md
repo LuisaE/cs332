@@ -58,7 +58,7 @@ and other thread should take over.
 
 - For simple_priority_thread_test, due to the unpredictable behaviors of thread_start_context(), we implemented a latency time in a loop to make sure our threads behave in the order that we expected. This is not a concerning bug, but this suggests that our scheduling mechaninism might not work perfectly under some conditions, which was compensated by adding a lagging period between the threads. Due to the time constrant, we believe this approach is appropriate. 
 
-- In the second loop in our attempted function get_max_priority_thread(), we encountered a bug where the program got stuck and was not able to exit the loop. We believe that the issue might lie in how we constructed the nodes to be included in the list of max_threads. We tried to modify the struct thread to include a different type of node but it didn't resolve our problem. 
+- (For ties) In get_max_priority_thread_tie(), we encountered a bug where the program got stuck and was not able to exit the loop. We believe that the issue might lie in how we constructed the nodes to be included in the list of max_threads. We tried to modify the struct thread to include a different type of node but it didn't resolve our problem. 
 
 ## Anything interesting you would like to share
 
