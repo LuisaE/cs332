@@ -38,6 +38,12 @@ void yield(threadstate_t next_state, void* lock);
 struct thread* get_max_priority_thread();
 
 /*
+* Return the list of threads with the highest priority from the ready list
+* Contains only one element if only one thread has highest priority
+*/
+void get_max_priority_thread_tie();
+
+/*
 * Return the thread switch count for all CPUs for testing purposes 
 */
 int get_thread_switch_count();

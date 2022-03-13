@@ -10,6 +10,10 @@ List _ready_queue;
 List* ready_queue = &_ready_queue;
 size_t thread_switch_count = 0;
 
+// for ties
+List _max_threads;
+List* max_threads = &_max_threads;
+
 /* 
  * Schedules a new thread, if no thread on the ready queue
  * current cpu's idle thread is scheduled. Returns a thread
@@ -113,6 +117,8 @@ sched(void)
 
     if (!list_empty(ready_queue)) {
         // schedule the highest priority thread in the ready queue to run
+        // For ties: change this to call get_max_priority_thread_tie, if  
+        // there are multiple threads with max priority -> handle ties
         next = get_max_priority_thread();
         kassert(next->state == READY);
         list_remove(&next->node);
@@ -188,6 +194,24 @@ struct thread* get_max_priority_thread() {
     }
     
     return max_priority_thread;
+}
+
+void get_max_priority_thread_tie() {
+    // start with a new list of max_threads each time
+    list_init(max_threads);
+
+    struct thread* max_t = get_max_priority_thread();
+
+    // if there is at least one thread, we check if there are ties
+    if (max_t) {
+        int max_priority = max_t->priority;
+        for (Node *n = list_begin(ready_queue); n != list_end(ready_queue); n = list_next(n)) {
+            struct thread *t = (struct thread*) list_entry(n, struct thread, node);
+            if (max_priority == t->priority) {
+                list_append(max_threads, &t->tie_node);
+            }
+        }
+    }
 }
 
 int get_thread_switch_count() {
