@@ -66,7 +66,6 @@ sched_ready(struct thread *t)
             curr->state = READY;
             list_append(ready_queue, &curr->node);
         }
-        //list_append(ready_queue, &curr->node);
         t->state = RUNNING;
         thread_switch_count++;
         // schedule the max priority thread to run

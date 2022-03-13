@@ -15,12 +15,11 @@
 #include <kernel/sched_test.h>
 #include <lib/string.h>
 
-
-// Helper funtions 
-
 #define BUFF_SIZE 32
 #define LOOP 80000
-#define DELAY 1
+#define DELAY 1  // delay used in simple priority test
+
+// Helper funtions 
 
 int idle_thread(void *args) {
     for (int i = 0; i < LOOP; i++) { }
@@ -142,6 +141,7 @@ int simple_priority_sched_test() {
 }
 
 int tie_priority_sched_test() {
+    kprintf("Start tie_priority_sched_test\n");
    
     struct thread *thread_a = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 10);
     struct thread *thread_b = thread_create("simple_priority/thread high", proc_current(), DEFAULT_PRI + 10);

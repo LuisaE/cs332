@@ -34,7 +34,10 @@ kernel_init(void *args)
     lower_thread_priority_should_yield();
     inversion_priority_sched_test();
     simple_priority_sched_test();
-    // tie_priority_sched_test();
+
+    // Does not pass
+    kprintf("\n------ TEST DOES NOT PASS ------ \n");
+    tie_priority_sched_test();
     return 0;
 #endif
     // spawn initial process - init
